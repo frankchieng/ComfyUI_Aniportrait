@@ -1,6 +1,6 @@
 ![aniportrait](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/1ec674bc-0690-4818-a097-f79244c61abc)
 
-This is unofficial implementation of AniPortrait in ComfyUI custom_node
+This is unofficial implementation of AniPortrait in ComfyUI custom_node,cuz i have routine jobs,so i will update this project when i have time,currently only the raw video to human pose with the pose to video workflow has been accomplished
 you should git clone https://github.com/frankchieng/ComfyUI_Aniportrait.git at first,
 then run pip install -r requirements.txt
 download the pretrained models
