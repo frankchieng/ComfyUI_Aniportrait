@@ -1,4 +1,15 @@
 ![aniportrait](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/1ec674bc-0690-4818-a097-f79244c61abc)
+### raw video to pose video with reference image
+
+<table class="center">
+<tr>
+    <td width=100% style="border: none">
+        <video controls autoplay loop src="https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/4f3bd91e-367a-435b-bedb-54c63df1d32f" muted="false"></video>
+    </td>
+</tr>
+</table>
+
+
 
 This is unofficial implementation of AniPortrait in ComfyUI custom_node,cuz i have routine jobs,so i will update this project when i have time,currently only the raw video to human pose with the pose to video workflow has been accomplished
 you can check it out at 
