@@ -10,6 +10,8 @@ download the pretrained models
 
 > [image_encoder](https://huggingface.co/lambdalabs/sd-image-variations-diffusers/tree/main/image_encoder)
 
+> [wav2vec2-base-960h](https://huggingface.co/facebook/wav2vec2-base-960h) 
+
 download the weights:
 > [denoising_unet.pth](https://huggingface.co/ZJYang/AniPortrait/tree/main)
 > [reference_unet.pth](https://huggingface.co/ZJYang/AniPortrait/tree/main)
