@@ -1,6 +1,15 @@
-![aniportrait](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/1ec674bc-0690-4818-a097-f79244c61abc)
-### raw video to pose video with reference image
+### reference audio combined with reference image and reference video
+![1711975289851](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/d38e2275-a15b-4254-a78c-5ef3ba682c85)
+<table class="center">
+<tr>
+    <td width=100% style="border: none">
+        <video controls autoplay loop src="https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/51b1a7ab-854d-4f2d-8ba8-2fc0b92764dd" muted="false"></video>
+    </td>
+</tr>
+</table>
 
+### raw video to pose video with reference image
+![aniportrait](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/1ec674bc-0690-4818-a097-f79244c61abc)
 <table class="center">
 <tr>
     <td width=100% style="border: none">
@@ -11,10 +20,11 @@
 
 
 
-This is unofficial implementation of AniPortrait in ComfyUI custom_node,cuz i have routine jobs,so i will update this project when i have time,currently only the raw video to human pose with the pose to video workflow has been accomplished
-you can check it out at 
+This is unofficial implementation of AniPortrait in ComfyUI custom_node,cuz i have routine jobs,so i will update this project when i have time
 > [Aniportrait_pose2video.json](https://github.com/frankchieng/ComfyUI_Aniportrait/blob/main/Aniportrait_pose2video.json)
 
+> [Audio driven](https://github.com/frankchieng/ComfyUI_Aniportrait/blob/main/audio2video_workflow.json)
+> 
 you should run
 > git clone https://github.com/frankchieng/ComfyUI_Aniportrait.git
 > 
