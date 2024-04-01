@@ -6,7 +6,7 @@ import cv2
 from tqdm import tqdm
 import re
 
-from .nodes import PoseGenVideo, RefImagePath
+from .nodes import PoseGenVideo, RefImagePath, GenerateRefPose, Audio2Video, AudioPath
 
 from .src.utils.util import get_fps, read_frames, save_videos_from_pil, calculate_file_hash, get_sorted_dir_files_from_directory, get_audio, lazy_eval, hash_path, validate_path
 import numpy as np
@@ -151,11 +151,17 @@ NODE_CLASS_MAPPINGS = {
     "AniPortrait_LoadVideoPath": LoadVideoPath,
     "AniPortrait_Pose_Gen_Video": PoseGenVideo,
     "AniPortrait_Ref_Image_Path": RefImagePath,
+    "AniPortrait_Generate_Ref_Pose": GenerateRefPose,
+    "AniPortrait_Audio2Video": Audio2Video,
+    "AniPortrait_Audio_Path": AudioPath,    
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "AniPortrait_Video_Gen_Pose": "Video MediaPipe Face Detection🎥AniPortrait",
     "AniPortrait_LoadVideoPath": "Load Video (Path) 🎥AniPortrait",
     "AniPortrait_Pose_Gen_Video": "Pose Generate Video 🎥AniPortrait",
-    "AniPortrait_Ref_Image_Path": "Reference Image Path 🎥AniPortrait",
+    "AniPortrait_Ref_Image_Path": "Ref Image Path 🎥AniPortrait",
+    "AniPortrait_Generate_Ref_Pose": "Generate Ref Pose 🎥AniPortrait",
+    "AniPortrait_Audio2Video": "Audio Gen Video 🎥AniPortrait",   
+    "AniPortrait_Audio_Path": "Audio Path 🎥AniPortrait",   
 }
