@@ -24,6 +24,8 @@ class VideoGenPose:
                 "frames": ("IMAGE",),
                 "frame_per_second": ('Frame_per_second',),
                 "filename_prefix": ("STRING", {"default": "AniPortrait"}),
+                "height": ("INT", {"default": 512, "min": 0, "max": 1024, "step": 1}),
+                "width": ("INT", {"default": 512, "min": 0, "max": 1024, "step": 1}),
                 "save_output": ("BOOLEAN", {"default": True}),
             },
             "optional": {
@@ -37,7 +39,7 @@ class VideoGenPose:
     CATEGORY = "AniPortrait 🎥Video"
     FUNCTION = "generate_pose_video"
 
-    def generate_pose_video(self, video, frames, frame_per_second, filename_prefix, save_output, audio):
+    def generate_pose_video(self, video, frames, frame_per_second, filename_prefix, save_output, height, width, audio):
         # get output information
         output_dir = (
             folder_paths.get_output_directory()
@@ -72,9 +74,6 @@ class VideoGenPose:
         out_path = os.path.join(full_output_folder, output_file)
         lmk_extractor = LMKExtractor()
         vis = FaceMeshVisualizer(forehead_edge=False)
-    
-        width = 512
-        height = 512
 
         kps_results = []
         for i, frame_pil in enumerate(tqdm(frames)):

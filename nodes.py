@@ -63,6 +63,13 @@ class PoseGenVideo:
             "required": {
                 "ref_image_path": ("RefImage_Path",),
                 "pose_video_path": ("PoseVideo_Path", ),
+                "height": ("INT", {"default": 512, "min": 0, "max": 1024, "step": 1}),
+                "width": ("INT", {"default": 512, "min": 0, "max": 1024, "step": 1}),
+                "frames": ("INT", {"default": 0, "min":0, "max": 9999, "step": 1}),
+                "seed": ("INT", {"default": 42}),
+                "cfg": ("FLOAT", {"default": 3.5, "min": 0.0, "max": 10.0, "step": 0.1}),
+                "steps": ("INT", {"default": 25, "min":0, "max": 50, "step": 1}),
+                "frame_per_second": ("INT", {"default": 0, "min":0, "max": 240, "step": 1}),
                 "vae_path": ([animation_config.pretrained_vae_path],),
                 "model": ([animation_config.pretrained_base_model_path],),
                 "weight_dtype": (["fp16", "fp32"],),
@@ -80,7 +87,7 @@ class PoseGenVideo:
     CATEGORY = "AniPortrait 🎥Video"
     FUNCTION = "pose_generate_video"
 
-    def pose_generate_video(self, ref_image_path, pose_video_path, vae_path, model, weight_dtype, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path):
+    def pose_generate_video(self, ref_image_path, pose_video_path, height, width, frames, seed, cfg, steps, frame_per_second, vae_path, model, weight_dtype, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path):
         if weight_dtype == "fp16":
             weight_dtype = torch.float16
         else:
@@ -107,11 +114,8 @@ class PoseGenVideo:
         sched_kwargs = OmegaConf.to_container(infer_config.noise_scheduler_kwargs)
         scheduler = DDIMScheduler(**sched_kwargs)
 
-        generator = torch.manual_seed(42)
+        generator = torch.manual_seed(seed)
 
-        width, height = 512, 512
-        cfg = 3.5
-        
         # load pretrained weights
         denoising_unet.load_state_dict(torch.load(denoising_unet_path, map_location="cpu"), strict=False,)
         reference_unet.load_state_dict(torch.load(reference_unet_path, map_location="cpu"),)
@@ -128,7 +132,7 @@ class PoseGenVideo:
         pipe = pipe.to(device, dtype=weight_dtype)
         
         #date_str = datetime.now().strftime("%Y%m%d")
-        time_str = datetime.now().strftime("%H%M")
+        time_str = datetime.now().strftime("%H%M%S")
         #save_dir_name = f"{time_str}--seed_{args.seed}-{width}x{height}"
 
         #save_dir = Path(f"output/{date_str}/{save_dir_name}")
@@ -143,7 +147,7 @@ class PoseGenVideo:
         pose_name = Path(pose_video_path).stem
         ref_image_pil = Image.open(ref_image_path).convert("RGB")
         ref_image_np = cv2.cvtColor(np.array(ref_image_pil), cv2.COLOR_RGB2BGR)
-        ref_image_np = cv2.resize(ref_image_np, (512, 512))
+        ref_image_np = cv2.resize(ref_image_np, (height, width))
             
         face_result = lmk_extractor(ref_image_np)
         assert face_result is not None, "Can not detect a face in the reference image."
@@ -158,8 +162,8 @@ class PoseGenVideo:
         pose_transform = transforms.Compose(
             [transforms.Resize((height, width)), transforms.ToTensor()]
         )
-        args_L = len(pose_images)
-        for pose_image_pil in pose_images[: args_L]:
+        frame_length = len(pose_images) if frames==0 else frames
+        for pose_image_pil in pose_images[: frame_length]:
             pose_tensor_list.append(pose_transform(pose_image_pil))
             pose_image_np = cv2.cvtColor(np.array(pose_image_pil), cv2.COLOR_RGB2BGR)
             pose_image_np = cv2.resize(pose_image_np,  (width, height))
@@ -181,11 +185,11 @@ class PoseGenVideo:
         pose_tensor = pose_tensor.transpose(0, 1)
         pose_tensor = pose_tensor.unsqueeze(0) 
         
-        video = pipe(ref_image_pil, pose_list, ref_pose, width, height, video_length, 25, 3.5, generator=generator,).videos        
+        video = pipe(ref_image_pil, pose_list, ref_pose, width, height, video_length, steps, cfg, generator=generator,).videos        
         
-        video = torch.cat([ref_image_tensor, pose_tensor, video], dim=0)
+        #video = torch.cat([ref_image_tensor, pose_tensor, video], dim=0)
         save_path = f"{save_dir}/{ref_name}_{pose_name}_{height}x{width}_{int(cfg)}_{time_str}_noaudio.mp4"
-        save_videos_grid(video, save_path, n_rows=3, fps=src_fps)        
+        save_videos_grid(video, save_path, n_rows=3, fps=src_fps if frame_per_second==0 else frame_per_second)        
 
         audio_output = os.path.join(save_dir, 'audio_from_video.aac')
         # extract audio
@@ -363,6 +367,13 @@ class Audio2Video:
                 "ref_image_path": ("RefImage_Path",),
                 "audio_path": ("Audio_Path",),
                 "ref_video": ("FILENAMES", ),
+                "height": ("INT", {"default": 512, "min": 0, "max": 1024, "step": 1}),
+                "width": ("INT", {"default": 512, "min": 0, "max": 1024, "step": 1}),
+                "frames": ("INT", {"default": 0, "min":0, "max": 9999, "step": 1}),
+                "seed": ("INT", {"default": 42}),
+                "cfg": ("FLOAT", {"default": 3.5, "min": 0.0, "max": 10.0, "step": 0.1}),
+                "steps": ("INT", {"default": 25, "min":0, "max": 50, "step": 1}),
+                "frame_per_second": ("INT", {"default": 30, "min":0, "max": 240, "step": 1}),
                 "vae_path": ([audio_config.pretrained_vae_path],),
                 "model": ([audio_config.pretrained_base_model_path],),
                 "weight_dtype": (["fp16", "fp32"],),
@@ -380,7 +391,7 @@ class Audio2Video:
     CATEGORY = "AniPortrait 🎥Video"
     FUNCTION = "audio_2_video"
 
-    def audio_2_video(self, ref_image_path, audio_path, ref_video, vae_path, model, weight_dtype, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path):
+    def audio_2_video(self, ref_image_path, audio_path, ref_video, height, width, frames, seed, cfg, steps, frame_per_second, vae_path, model, weight_dtype, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path):
         if weight_dtype == "fp16":
             weight_dtype = torch.float16
         else:
@@ -417,9 +428,7 @@ class Audio2Video:
         sched_kwargs = OmegaConf.to_container(infer_config.noise_scheduler_kwargs)
         scheduler = DDIMScheduler(**sched_kwargs)
         
-        generator = torch.manual_seed(42)
-
-        width, height = 512, 512
+        generator = torch.manual_seed(seed)
 
         # load pretrained weights
         denoising_unet.load_state_dict(torch.load(denoising_unet_path, map_location="cpu"), strict=False,)
@@ -437,7 +446,7 @@ class Audio2Video:
         pipe = pipe.to("cuda", dtype=weight_dtype)
 
         date_str = datetime.now().strftime("%Y%m%d")
-        time_str = datetime.now().strftime("%H%M")
+        time_str = datetime.now().strftime("%H%M%S")
         #save_dir_name = f"{time_str}--seed_{args.seed}-{args.W}x{args.H}"
 
         #save_dir = Path(f"output/{date_str}/{save_dir_name}")
@@ -484,10 +493,10 @@ class Audio2Video:
 
         pose_list = []
         pose_tensor_list = []
-        print(f"pose video has {len(pose_images)} frames, with 30 fps")
+        print(f"pose video has {len(pose_images)} frames, with {frame_per_second} fps")
         pose_transform = transforms.Compose([transforms.Resize((height, width)), transforms.ToTensor()])
-        args_L = len(pose_images)
-        for pose_image_np in pose_images[: args_L]:
+        frame_length = len(pose_images) if frames==0 else frames
+        for pose_image_np in pose_images[: frame_length]:
             pose_image_pil = Image.fromarray(cv2.cvtColor(pose_image_np, cv2.COLOR_BGR2RGB))
             pose_tensor_list.append(pose_transform(pose_image_pil))
             pose_image_np = cv2.resize(pose_image_np,  (width, height))
@@ -516,18 +525,18 @@ class Audio2Video:
             width,
             height,
             video_length,
-            25,
-            3.5,
+            steps,
+            cfg,
             generator=generator,
         ).videos    
 
-        video = torch.cat([ref_image_tensor, pose_tensor, video], dim=0)
-        save_path = f"{save_dir}/{ref_name}_{audio_name}_{height}x{width}_{time_str}_noaudio.mp4"
+        #video = torch.cat([ref_image_tensor, pose_tensor, video], dim=0)
+        save_path = f"{save_dir}/{ref_name}_{audio_name}_{height}x{width}_{int(cfg)}_{time_str}_noaudio.mp4"
         save_videos_grid(
             video,
             save_path,
             n_rows=3,
-            fps=30,
+            fps=frame_per_second,
         )
             
         stream = ffmpeg.input(save_path)
