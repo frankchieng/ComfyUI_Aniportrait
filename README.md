@@ -36,11 +36,13 @@ This is unofficial implementation of AniPortrait in ComfyUI custom_node,cuz i ha
 > [face reenacment](https://github.com/frankchieng/ComfyUI_Aniportrait/blob/main/assets/face_reenacment_workflow.json)
 
 you should run
-> git clone https://github.com/frankchieng/ComfyUI_Aniportrait.git
-> 
-then
-> run pip install -r requirements.txt
-
+```shell
+git clone https://github.com/frankchieng/ComfyUI_Aniportrait.git
+```
+then run 
+```shell
+pip install -r requirements.txt
+```
 download the pretrained models
 > [StableDiffusion V1.5](https://huggingface.co/runwayml/stable-diffusion-v1-5)
 
