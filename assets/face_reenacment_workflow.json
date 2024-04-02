@@ -1,0 +1,187 @@
+{
+  "last_node_id": 4,
+  "last_link_id": 2,
+  "nodes": [
+    {
+      "id": 3,
+      "type": "AniPortrait_Audio2Video",
+      "pos": [
+        -945,
+        643
+      ],
+      "size": {
+        "0": 330,
+        "1": 502
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "ref_image_path",
+          "type": "RefImage_Path",
+          "link": 2,
+          "label": "ref_image_path"
+        },
+        {
+          "name": "video",
+          "type": "AniPortrait_Video",
+          "link": 1,
+          "label": "video"
+        },
+        {
+          "name": "audio_path",
+          "type": "Audio_Path",
+          "link": null,
+          "label": "audio_path"
+        },
+        {
+          "name": "ref_pose_path",
+          "type": "FILENAMES",
+          "link": null,
+          "label": "ref_pose_path"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Audio2Video",
+          "type": "FILENAMES",
+          "links": null,
+          "shape": 3,
+          "label": "Audio2Video"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AniPortrait_Audio2Video"
+      },
+      "widgets_values": [
+        512,
+        512,
+        0,
+        1634,
+        "randomize",
+        3.5,
+        25,
+        0,
+        "pretrained_model/sd-vae-ft-mse",
+        "pretrained_model/stable-diffusion-v1-5",
+        "fp16",
+        "pretrained_model/motion_module.pth",
+        "pretrained_model/image_encoder",
+        "pretrained_model/denoising_unet.pth",
+        "pretrained_model/reference_unet.pth",
+        "pretrained_model/pose_guider.pth",
+        true
+      ]
+    },
+    {
+      "id": 2,
+      "type": "AniPortrait_Ref_Image_Path",
+      "pos": [
+        -1373.4152359840036,
+        392.97491389606216
+      ],
+      "size": {
+        "0": 315,
+        "1": 58
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "ref_image_path",
+          "type": "RefImage_Path",
+          "links": [
+            2
+          ],
+          "shape": 3,
+          "label": "ref_image_path",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AniPortrait_Ref_Image_Path"
+      },
+      "widgets_values": [
+        "/home/qm/woman.jpg"
+      ]
+    },
+    {
+      "id": 1,
+      "type": "AniPortrait_LoadVideoPath",
+      "pos": [
+        -1911,
+        686
+      ],
+      "size": {
+        "0": 315,
+        "1": 118
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "video",
+          "type": "AniPortrait_Video",
+          "links": [
+            1
+          ],
+          "shape": 3,
+          "label": "video",
+          "slot_index": 0
+        },
+        {
+          "name": "frames",
+          "type": "IMAGE",
+          "links": null,
+          "shape": 3,
+          "label": "frames"
+        },
+        {
+          "name": "frame_per_second",
+          "type": "Frame_per_second",
+          "links": null,
+          "shape": 3,
+          "label": "frame_per_second"
+        },
+        {
+          "name": "audio",
+          "type": "AniPortrait_Audio",
+          "links": null,
+          "shape": 3,
+          "label": "audio"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AniPortrait_LoadVideoPath"
+      },
+      "widgets_values": [
+        "/home/qm/pose_ref_video.mp4"
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      3,
+      1,
+      "AniPortrait_Video"
+    ],
+    [
+      2,
+      2,
+      0,
+      3,
+      0,
+      "RefImage_Path"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}
