@@ -1,5 +1,5 @@
-### reference audio combined with reference image and reference video
-![audio2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/8172562e-daab-4e36-8a82-3648a11fa2c0)
+### audio driven combined with reference image and reference video
+![audio2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/c4425aac-7b39-4e5a-80fc-3e0f0a0f662d)
 <table class="center">
 <tr>
     <td width=100% style="border: none">
@@ -9,7 +9,7 @@
 </table>
 
 ### raw video to pose video with reference image
-![pose2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/3467550f-3368-4a2c-9db8-884f4d50a492)
+![pose2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/7537b5a7-abd1-492c-b41b-cd5c7db5e9ef)
 <table class="center">
 <tr>
     <td width=100% style="border: none">
@@ -18,13 +18,23 @@
 </tr>
 </table>
 
-
+### face reenacment
+![face_reenacment](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/1c56f7c2-cbe4-4686-9dd5-f0fe0f8be5b6)
+<table class="center">
+<tr>
+    <td width=100% style="border: none">
+        <video controls autoplay loop src="https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/72f01543-f33b-44d7-b323-babea56b5f12" muted="false"></video>
+    </td>
+</tr>
+</table>
 
 This is unofficial implementation of AniPortrait in ComfyUI custom_node,cuz i have routine jobs,so i will update this project when i have time
-> [Aniportrait_pose2video.json](https://github.com/frankchieng/ComfyUI_Aniportrait/blob/main/Aniportrait_pose2video.json)
+> [Aniportrait_pose2video.json](https://github.com/frankchieng/ComfyUI_Aniportrait/blob/main/assets/pose2video_workflow.json)
 
-> [Audio driven](https://github.com/frankchieng/ComfyUI_Aniportrait/blob/main/audio2video_workflow.json)
-> 
+> [Audio driven](https://github.com/frankchieng/ComfyUI_Aniportrait/blob/main/assets/audio2video_workflow.json)
+
+> [face reenacment](https://github.com/frankchieng/ComfyUI_Aniportrait/blob/main/assets/face_reenacment_workflow.json)
+
 you should run
 > git clone https://github.com/frankchieng/ComfyUI_Aniportrait.git
 > 
