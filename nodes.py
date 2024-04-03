@@ -200,7 +200,7 @@ class PoseGenVideo:
         # merge audio and video
         stream = ffmpeg.input(save_path)
         audio = ffmpeg.input(audio_output)
-        ffmpeg.output(stream.video, audio.audio, save_path.replace('_noaudio.mp4', '.mp4'), vcodec='copy', acodec='aac').run()
+        ffmpeg.output(stream.video, audio.audio, save_path.replace('_noaudio.mp4', '.mp4'), vcodec='copy', acodec='aac', shortest=None).run()
             
         os.remove(save_path)
         os.remove(audio_output)   
@@ -558,7 +558,7 @@ class Audio2Video:
                 
             stream = ffmpeg.input(save_path)
             audio = ffmpeg.input(audio_path)
-            ffmpeg.output(stream.video, audio.audio, save_path.replace('_noaudio.mp4', '.mp4'), vcodec='copy', acodec='aac').run()
+            ffmpeg.output(stream.video, audio.audio, save_path.replace('_noaudio.mp4', '.mp4'), vcodec='copy', acodec='aac', shortest=None).run()
             os.remove(save_path)        
 
         else:
@@ -711,7 +711,7 @@ class Audio2Video:
             # merge audio and video
             stream = ffmpeg.input(save_path)
             audio = ffmpeg.input(audio_output)
-            ffmpeg.output(stream.video, audio.audio, save_path.replace('_noaudio.mp4', '.mp4'), vcodec='copy', acodec='aac').run()
+            ffmpeg.output(stream.video, audio.audio, save_path.replace('_noaudio.mp4', '.mp4'), vcodec='copy', acodec='aac', shortest=None).run()
             
             os.remove(save_path)
             os.remove(audio_output)
