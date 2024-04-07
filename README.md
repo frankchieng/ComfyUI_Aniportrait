@@ -1,5 +1,5 @@
 ### audio driven combined with reference image and reference video
-![audio2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/c4425aac-7b39-4e5a-80fc-3e0f0a0f662d)
+![audio2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/27a0a680-ebd0-47ec-a26a-fd31f7fb6600)
 <table class="center">
 <tr>
     <td width=100% style="border: none">
@@ -9,7 +9,7 @@
 </table>
 
 ### raw video to pose video with reference image
-![pose2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/7537b5a7-abd1-492c-b41b-cd5c7db5e9ef)
+![pose2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/a05019b9-3b9f-4ae3-8d7b-43892bbf497d)
 <table class="center">
 <tr>
     <td width=100% style="border: none">
@@ -19,7 +19,7 @@
 </table>
 
 ### face reenacment
-![face_reenacment](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/1c56f7c2-cbe4-4686-9dd5-f0fe0f8be5b6)
+![face_reenacment](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/51a1f2cd-4756-4ec9-ba9d-aa2e9769eb43)
 <table class="center">
 <tr>
     <td width=100% style="border: none">
