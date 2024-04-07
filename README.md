@@ -58,7 +58,7 @@ download the weights:
 > [pose_guider.pth](https://huggingface.co/ZJYang/AniPortrait/tree/main)
 > [motion_module.pth](https://huggingface.co/ZJYang/AniPortrait/tree/main)
 > [audio2mesh.pt](https://huggingface.co/ZJYang/AniPortrait/tree/main)
-
+> [film_net_fp16.pt](https://huggingface.co/ZJYang/AniPortrait/tree/main)
 ```text
 ./pretrained_model/
 |-- image_encoder
@@ -89,10 +89,13 @@ download the weights:
 |-- denoising_unet.pth
 |-- motion_module.pth
 |-- pose_guider.pth
-`-- reference_unet.pth
+|-- reference_unet.pth
+|-- film_net_fp16.pt
 ```
 
 Tips :
+Implement the frame_interpolation to speed up generation
+
 The intermediate audio file will be generated and deleted,the raw video to pose video with audio and pose2video mp4 file will be located in the output directory of ComfyUI
 the original uploaded mp4 video requires square size like 512x512, otherwise the result will be weird 
 #### I've updated diffusers from 0.24.x to 0.26.2,so the diffusers/models/embeddings.py classname of PositionNet changed to GLIGENTextBoundingboxProjection and CaptionProjection changed to PixArtAlphaTextProjection,you should pay attention to it and modify the corresponding python files like src/models/transformer_2d.py if you installed the lower version of diffusers 
