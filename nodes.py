@@ -26,7 +26,7 @@ from .src.models.unet_2d_condition import UNet2DConditionModel
 from .src.models.unet_3d import UNet3DConditionModel
 from .src.pipelines.pipeline_pose2vid_long import Pose2VideoPipeline
 from .src.utils.util import get_fps, read_frames, save_videos_grid, calculate_file_hash, get_sorted_dir_files_from_directory, get_audio, lazy_eval, hash_path, validate_path
-
+from .src.utils.frame_interpolation import init_frame_interpolation_model, batch_images_interpolation_tool
 from .src.audio_models.model import Audio2MeshModel
 from .src.utils.audio_util import prepare_audio_feature
 from .src.utils.mp_utils  import LMKExtractor
@@ -75,6 +75,8 @@ class PoseGenVideo:
                 "vae_path": ([animation_config.pretrained_vae_path],),
                 "model": ([animation_config.pretrained_base_model_path],),
                 "weight_dtype": (["fp16", "fp32"],),
+                "accelerate": ("BOOLEAN", {"default": True}),
+                "fi_step": ("INT", {"default": 3}),
                 "motion_module_path": ([animation_config.motion_module_path],),
                 "image_encoder_path": ([animation_config.image_encoder_path],),
                 "denoising_unet_path": ([animation_config.denoising_unet_path],),
@@ -90,7 +92,7 @@ class PoseGenVideo:
     CATEGORY = "AniPortrait 🎥Video"
     FUNCTION = "pose_generate_video"
 
-    def pose_generate_video(self, ref_image_path, pose_video_path, height, width, frames, seed, cfg, steps, frame_per_second, vae_path, model, weight_dtype, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path, save_output=True):
+    def pose_generate_video(self, ref_image_path, pose_video_path, height, width, frames, seed, cfg, steps, frame_per_second, vae_path, model, weight_dtype, accelerate, fi_step, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path, save_output=True):
         # get output information
         save_dir = (
             folder_paths.get_output_directory()
@@ -146,6 +148,9 @@ class PoseGenVideo:
         lmk_extractor = LMKExtractor()
         vis = FaceMeshVisualizer(forehead_edge=False)   
         
+        if accelerate:
+            frame_inter_model = init_frame_interpolation_model()
+        
         ref_name = Path(ref_image_path).stem
         pose_name = Path(pose_video_path).stem
         ref_image_pil = Image.open(ref_image_path).convert("RGB")
@@ -168,29 +173,34 @@ class PoseGenVideo:
         frame_length = len(pose_images) if frames==0 else frames
         for pose_image_pil in pose_images[: frame_length]:
             pose_tensor_list.append(pose_transform(pose_image_pil))
+        sub_step = fi_step if accelerate else 1
+        for pose_image_pil in pose_images[: frame_length: sub_step]:
             pose_image_np = cv2.cvtColor(np.array(pose_image_pil), cv2.COLOR_RGB2BGR)
             pose_image_np = cv2.resize(pose_image_np,  (width, height))
             pose_list.append(pose_image_np)       
          
         pose_list = np.array(pose_list)
             
-        video_length = len(pose_tensor_list)
-
-        ref_image_tensor = pose_transform(ref_image_pil)  # (c, h, w)
-        ref_image_tensor = ref_image_tensor.unsqueeze(1).unsqueeze(
-            0
-        )  # (1, c, 1, h, w)
-        ref_image_tensor = repeat(
-            ref_image_tensor, "b c f h w -> b c (repeat f) h w", repeat=video_length
-        )
-
+        video_length = len(pose_list)
+        
         pose_tensor = torch.stack(pose_tensor_list, dim=0)  # (f, c, h, w)
         pose_tensor = pose_tensor.transpose(0, 1)
         pose_tensor = pose_tensor.unsqueeze(0) 
         
         video = pipe(ref_image_pil, pose_list, ref_pose, width, height, video_length, steps, cfg, generator=generator,).videos        
         
-        #video = torch.cat([ref_image_tensor, pose_tensor, video], dim=0)
+        if accelerate:
+            video = batch_images_interpolation_tool(video, frame_inter_model, inter_frames=fi_step-1)
+            
+        ref_image_tensor = pose_transform(ref_image_pil)  # (c, h, w)
+        ref_image_tensor = ref_image_tensor.unsqueeze(1).unsqueeze(
+            0
+        )  # (1, c, 1, h, w)
+        ref_image_tensor = repeat(
+            ref_image_tensor, "b c f h w -> b c (repeat f) h w", repeat=video.shape[2]
+        ) 
+              
+        video = torch.cat([ref_image_tensor, pose_tensor[:,:,:video.shape[2]], video], dim=0)
         save_path = f"{save_dir}/{ref_name}_{pose_name}_{height}x{width}_{int(cfg)}_{time_str}_noaudio.mp4"
         save_videos_grid(video, save_path, n_rows=3, fps=src_fps if frame_per_second==0 else frame_per_second)        
 
@@ -386,6 +396,8 @@ class Audio2Video:
                 "vae_path": ([audio_config.pretrained_vae_path],),
                 "model": ([audio_config.pretrained_base_model_path],),
                 "weight_dtype": (["fp16", "fp32"],),
+                "accelerate": ("BOOLEAN", {"default": True}),
+                "fi_step": ("INT", {"default": 3}),
                 "motion_module_path": ([audio_config.motion_module_path],),
                 "image_encoder_path": ([audio_config.image_encoder_path],),
                 "denoising_unet_path": ([audio_config.denoising_unet_path],),
@@ -406,7 +418,7 @@ class Audio2Video:
     CATEGORY = "AniPortrait 🎥Video"
     FUNCTION = "audio_2_video"
 
-    def audio_2_video(self, ref_image_path, height, width, frames, seed, cfg, steps, frame_per_second, vae_path, model, weight_dtype, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path, save_output=True, audio_path=None, ref_pose_path=None, video=None):
+    def audio_2_video(self, ref_image_path, height, width, frames, seed, cfg, steps, frame_per_second, vae_path, model, weight_dtype, accelerate, fi_step, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path, save_output=True, audio_path=None, ref_pose_path=None, video=None):
         # get output information
         save_dir = (
             folder_paths.get_output_directory()
@@ -471,8 +483,11 @@ class Audio2Video:
             time_str = datetime.now().strftime("%H%M%S")
             
             lmk_extractor = LMKExtractor()
-            vis = FaceMeshVisualizer(forehead_edge=False)        
-            
+            vis = FaceMeshVisualizer(forehead_edge=False)
+                    
+            if accelerate:
+                frame_inter_model = init_frame_interpolation_model()
+        
             ref_name = Path(ref_image_path).stem
             audio_name = Path(audio_path).stem
             
@@ -516,20 +531,14 @@ class Audio2Video:
             for pose_image_np in pose_images[: frame_length]:
                 pose_image_pil = Image.fromarray(cv2.cvtColor(pose_image_np, cv2.COLOR_BGR2RGB))
                 pose_tensor_list.append(pose_transform(pose_image_pil))
+            sub_step = fi_step if accelerate else 1
+            for pose_image_np in pose_images[: frame_length: sub_step]:
                 pose_image_np = cv2.resize(pose_image_np,  (width, height))
                 pose_list.append(pose_image_np)
                 
             pose_list = np.array(pose_list)
             
-            video_length = len(pose_tensor_list)
-
-            ref_image_tensor = pose_transform(ref_image_pil)  # (c, h, w)
-            ref_image_tensor = ref_image_tensor.unsqueeze(1).unsqueeze(
-                0
-            )  # (1, c, 1, h, w)
-            ref_image_tensor = repeat(
-                ref_image_tensor, "b c f h w -> b c (repeat f) h w", repeat=video_length
-            )
+            video_length = len(pose_list)
 
             pose_tensor = torch.stack(pose_tensor_list, dim=0)  # (f, c, h, w)
             pose_tensor = pose_tensor.transpose(0, 1)
@@ -546,8 +555,20 @@ class Audio2Video:
                 cfg,
                 generator=generator,
             ).videos    
+            
+            if accelerate:
+                video = batch_images_interpolation_tool(video, frame_inter_model, inter_frames=fi_step-1)
 
-            #video = torch.cat([ref_image_tensor, pose_tensor, video], dim=0)
+            ref_image_tensor = pose_transform(ref_image_pil)  # (c, h, w)
+            ref_image_tensor = ref_image_tensor.unsqueeze(1).unsqueeze(
+                0
+            )  # (1, c, 1, h, w)
+            ref_image_tensor = repeat(
+                ref_image_tensor, "b c f h w -> b c (repeat f) h w", repeat=video.shape[2]
+            )
+
+            video = torch.cat([ref_image_tensor, pose_tensor[:,:,:video.shape[2]], video], dim=0)
+            
             save_path = f"{save_dir}/{ref_name}_{audio_name}_{height}x{width}_{int(cfg)}_{time_str}_noaudio.mp4"
             save_videos_grid(
                 video,
@@ -612,6 +633,9 @@ class Audio2Video:
             lmk_extractor = LMKExtractor()
             vis = FaceMeshVisualizer(forehead_edge=False)        
             
+            if accelerate:
+                frame_inter_model = init_frame_interpolation_model()
+            
             ref_name = Path(ref_image_path).stem
             pose_name = Path(video).stem
             
@@ -643,6 +667,8 @@ class Audio2Video:
             frame_length = len(source_images) if frames==0 else frames*step
             for src_image_pil in source_images[: frame_length: step]:
                 src_tensor_list.append(pose_transform(src_image_pil))
+            sub_step = step*fi_step if accelerate else step
+            for src_image_pil in source_images[: frame_length: sub_step]:
                 src_img_np = cv2.cvtColor(np.array(src_image_pil), cv2.COLOR_RGB2BGR)
                 frame_height, frame_width, _ = src_img_np.shape
                 src_img_result = lmk_extractor(src_img_np)
@@ -670,15 +696,8 @@ class Audio2Video:
             
             pose_list = np.array(pose_list)
             
-            video_length = len(src_tensor_list)                
+            video_length = len(pose_list)                
                 
-            ref_image_tensor = pose_transform(ref_image_pil)  # (c, h, w)
-            ref_image_tensor = ref_image_tensor.unsqueeze(1).unsqueeze(
-                0
-            )  # (1, c, 1, h, w)
-            ref_image_tensor = repeat(
-                ref_image_tensor, "b c f h w -> b c (repeat f) h w", repeat=video_length
-            )
 
             src_tensor = torch.stack(src_tensor_list, dim=0)  # (f, c, h, w)
             src_tensor = src_tensor.transpose(0, 1)
@@ -696,7 +715,18 @@ class Audio2Video:
                 generator=generator,
             ).videos
 
-            #video_gen = torch.cat([ref_image_tensor, video_gen, src_tensor], dim=0)
+            if accelerate:
+                video_gen = batch_images_interpolation_tool(video_gen, frame_inter_model, inter_frames=fi_step-1)
+
+            ref_image_tensor = pose_transform(ref_image_pil)  # (c, h, w)
+            ref_image_tensor = ref_image_tensor.unsqueeze(1).unsqueeze(
+                0
+            )  # (1, c, 1, h, w)
+            ref_image_tensor = repeat(
+                ref_image_tensor, "b c f h w -> b c (repeat f) h w", repeat=video_gen.shape[2]
+            )
+            
+            video_gen = torch.cat([ref_image_tensor, video_gen, src_tensor[:,:,:video_gen.shape[2]]], dim=0)
             save_path = f"{save_dir}/{ref_name}_{pose_name}_{height}x{width}_{int(cfg)}_{time_str}_noaudio.mp4"
             save_videos_grid(
                 video_gen,
