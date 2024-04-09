@@ -1,0 +1,558 @@
+{
+  "last_node_id": 59,
+  "last_link_id": 47,
+  "nodes": [
+    {
+      "id": 42,
+      "type": "VHS_LoadVideo",
+      "pos": [
+        -1964,
+        875
+      ],
+      "size": [
+        235.1999969482422,
+        491.1999969482422
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "batch_manager",
+          "type": "VHS_BatchManager",
+          "link": null,
+          "label": "batch_manager"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            38
+          ],
+          "shape": 3,
+          "label": "IMAGE",
+          "slot_index": 0
+        },
+        {
+          "name": "frame_count",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "frame_count"
+        },
+        {
+          "name": "audio",
+          "type": "VHS_AUDIO",
+          "links": [
+            34
+          ],
+          "shape": 3,
+          "label": "audio"
+        },
+        {
+          "name": "video_info",
+          "type": "VHS_VIDEOINFO",
+          "links": [
+            31
+          ],
+          "shape": 3,
+          "label": "video_info",
+          "slot_index": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VHS_LoadVideo"
+      },
+      "widgets_values": {
+        "video": "pose_ref_video.mp4",
+        "force_rate": 0,
+        "force_size": "Disabled",
+        "custom_width": 512,
+        "custom_height": 512,
+        "frame_load_cap": 0,
+        "skip_first_frames": 0,
+        "select_every_nth": 1,
+        "choose video to upload": "image",
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {
+            "frame_load_cap": 0,
+            "skip_first_frames": 0,
+            "force_rate": 0,
+            "filename": "pose_ref_video.mp4",
+            "type": "input",
+            "format": "video/mp4",
+            "select_every_nth": 1
+          }
+        }
+      }
+    },
+    {
+      "id": 29,
+      "type": "VHS_VideoInfo",
+      "pos": [
+        -1642,
+        1154
+      ],
+      "size": {
+        "0": 393,
+        "1": 206
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video_info",
+          "type": "VHS_VIDEOINFO",
+          "link": 31,
+          "label": "video_info"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "source_fps🟨",
+          "type": "FLOAT",
+          "links": [],
+          "shape": 3,
+          "label": "source_fps🟨",
+          "slot_index": 0
+        },
+        {
+          "name": "source_frame_count🟨",
+          "type": "INT",
+          "links": [
+            42
+          ],
+          "shape": 3,
+          "label": "source_frame_count🟨",
+          "slot_index": 1
+        },
+        {
+          "name": "source_duration🟨",
+          "type": "FLOAT",
+          "links": null,
+          "shape": 3,
+          "label": "source_duration🟨"
+        },
+        {
+          "name": "source_width🟨",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "source_width🟨",
+          "slot_index": 3
+        },
+        {
+          "name": "source_height🟨",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "source_height🟨"
+        },
+        {
+          "name": "loaded_fps🟦",
+          "type": "FLOAT",
+          "links": null,
+          "shape": 3,
+          "label": "loaded_fps🟦"
+        },
+        {
+          "name": "loaded_frame_count🟦",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "loaded_frame_count🟦"
+        },
+        {
+          "name": "loaded_duration🟦",
+          "type": "FLOAT",
+          "links": null,
+          "shape": 3,
+          "label": "loaded_duration🟦"
+        },
+        {
+          "name": "loaded_width🟦",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "loaded_width🟦"
+        },
+        {
+          "name": "loaded_height🟦",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "loaded_height🟦"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VHS_VideoInfo"
+      },
+      "widgets_values": {}
+    },
+    {
+      "id": 52,
+      "type": "AniPortrait_Video_Gen_Pose",
+      "pos": [
+        -1642,
+        1005
+      ],
+      "size": {
+        "0": 361.20001220703125,
+        "1": 106
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 38,
+          "label": "image"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pose_images",
+          "type": "IMAGE",
+          "links": [
+            41,
+            47
+          ],
+          "shape": 3,
+          "label": "pose_images",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AniPortrait_Video_Gen_Pose"
+      },
+      "widgets_values": [
+        "AniPortrait",
+        512,
+        512
+      ]
+    },
+    {
+      "id": 56,
+      "type": "LoadImage",
+      "pos": [
+        -1649,
+        633
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            45
+          ],
+          "shape": 3,
+          "label": "IMAGE",
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "MASK"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "solo.png",
+        "image"
+      ]
+    },
+    {
+      "id": 53,
+      "type": "AniPortrait_Pose_Gen_Video",
+      "pos": [
+        -1226,
+        797
+      ],
+      "size": {
+        "0": 315,
+        "1": 462
+      },
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "ref_image",
+          "type": "IMAGE",
+          "link": 45,
+          "label": "ref_image",
+          "slot_index": 0
+        },
+        {
+          "name": "pose_images",
+          "type": "IMAGE",
+          "link": 41,
+          "label": "pose_images"
+        },
+        {
+          "name": "frame_count",
+          "type": "INT",
+          "link": 42,
+          "widget": {
+            "name": "frame_count"
+          },
+          "slot_index": 2,
+          "label": "frame_count"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            43,
+            46
+          ],
+          "shape": 3,
+          "label": "images",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AniPortrait_Pose_Gen_Video"
+      },
+      "widgets_values": [
+        0,
+        512,
+        512,
+        688,
+        "randomize",
+        3.5,
+        25,
+        "pretrained_model/sd-vae-ft-mse",
+        "pretrained_model/stable-diffusion-v1-5",
+        "fp16",
+        true,
+        3,
+        "pretrained_model/motion_module.pth",
+        "pretrained_model/image_encoder",
+        "pretrained_model/denoising_unet.pth",
+        "pretrained_model/reference_unet.pth",
+        "pretrained_model/pose_guider.pth"
+      ]
+    },
+    {
+      "id": 44,
+      "type": "VHS_VideoCombine",
+      "pos": [
+        -877,
+        794
+      ],
+      "size": [
+        315,
+        599
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 43,
+          "label": "images",
+          "slot_index": 0
+        },
+        {
+          "name": "audio",
+          "type": "VHS_AUDIO",
+          "link": 34,
+          "label": "audio",
+          "slot_index": 1
+        },
+        {
+          "name": "batch_manager",
+          "type": "VHS_BatchManager",
+          "link": null,
+          "label": "batch_manager"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Filenames",
+          "type": "VHS_FILENAMES",
+          "links": null,
+          "shape": 3,
+          "label": "Filenames"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VHS_VideoCombine"
+      },
+      "widgets_values": {
+        "frame_rate": 25,
+        "loop_count": 0,
+        "filename_prefix": "Aniportrait",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 19,
+        "save_metadata": true,
+        "pingpong": false,
+        "save_output": true,
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {
+            "filename": "Aniportrait_00004-audio.mp4",
+            "subfolder": "",
+            "type": "output",
+            "format": "video/h264-mp4"
+          }
+        }
+      }
+    },
+    {
+      "id": 59,
+      "type": "PreviewImage",
+      "pos": [
+        -1245,
+        504
+      ],
+      "size": {
+        "0": 210,
+        "1": 246
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 47,
+          "label": "images"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 58,
+      "type": "PreviewImage",
+      "pos": [
+        -890,
+        503
+      ],
+      "size": {
+        "0": 210,
+        "1": 246
+      },
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 46,
+          "label": "images"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    }
+  ],
+  "links": [
+    [
+      31,
+      42,
+      3,
+      29,
+      0,
+      "VHS_VIDEOINFO"
+    ],
+    [
+      34,
+      42,
+      2,
+      44,
+      1,
+      "VHS_AUDIO"
+    ],
+    [
+      38,
+      42,
+      0,
+      52,
+      0,
+      "IMAGE"
+    ],
+    [
+      41,
+      52,
+      0,
+      53,
+      1,
+      "IMAGE"
+    ],
+    [
+      42,
+      29,
+      1,
+      53,
+      2,
+      "INT"
+    ],
+    [
+      43,
+      53,
+      0,
+      44,
+      0,
+      "IMAGE"
+    ],
+    [
+      45,
+      56,
+      0,
+      53,
+      0,
+      "IMAGE"
+    ],
+    [
+      46,
+      53,
+      0,
+      58,
+      0,
+      "IMAGE"
+    ],
+    [
+      47,
+      52,
+      0,
+      59,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}
