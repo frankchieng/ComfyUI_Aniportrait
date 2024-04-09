@@ -1,3 +1,10 @@
+#### Updates:
+① Implement the frame_interpolation to speed up generation
+
+② Modify the current code and support chain with the [VHS nodes](https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite), i just found that comfyUI IMAGE type requires the torch float32 datatype, and AniPortrait heavily used numpy of image unit8 datatype,so i just changed my mind from my own image/video upload and generation nodes to the prevelance SOTA VHS image/video upload and video combined nodes,it WYSIWYG and inteactive well and instantly render the result
+- ✅ [2024/04/09] raw video to pose video with reference image(aka self-driven)
+- 🔲 audio driven
+- 🔲 face reenacment
 ### audio driven combined with reference image and reference video
 ![audio2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/27a0a680-ebd0-47ec-a26a-fd31f7fb6600)
 <table class="center">
@@ -9,11 +16,11 @@
 </table>
 
 ### raw video to pose video with reference image
-![pose2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/a05019b9-3b9f-4ae3-8d7b-43892bbf497d)
+![pose2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/882e3685-ee13-4798-9f90-d195d6595a97)
 <table class="center">
 <tr>
     <td width=100% style="border: none">
-        <video controls autoplay loop src="https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/4f3bd91e-367a-435b-bedb-54c63df1d32f" muted="false"></video>
+        <video controls autoplay loop src="https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/edaa9907-8720-4435-8529-405c96a2e66d" muted="false"></video>
     </td>
 </tr>
 </table>
@@ -94,8 +101,6 @@ download the weights:
 ```
 
 Tips :
-Implement the frame_interpolation to speed up generation
-
 The intermediate audio file will be generated and deleted,the raw video to pose video with audio and pose2video mp4 file will be located in the output directory of ComfyUI
 the original uploaded mp4 video requires square size like 512x512, otherwise the result will be weird 
 #### I've updated diffusers from 0.24.x to 0.26.2,so the diffusers/models/embeddings.py classname of PositionNet changed to GLIGENTextBoundingboxProjection and CaptionProjection changed to PixArtAlphaTextProjection,you should pay attention to it and modify the corresponding python files like src/models/transformer_2d.py if you installed the lower version of diffusers 
