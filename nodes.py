@@ -5,6 +5,7 @@ import ffmpeg
 from datetime import datetime
 from pathlib import Path
 from typing import List
+import shutil
 import subprocess
 import av
 import numpy as np
@@ -37,6 +38,55 @@ from scipy.spatial.transform import Rotation as R
 from scipy.interpolate import interp1d
 from einops import rearrange
 
+def ffmpeg_suitability(path):
+    try:
+        version = subprocess.run([path, "-version"], check=True,
+                                 capture_output=True).stdout.decode("utf-8")
+    except:
+        return 0
+    score = 0
+    #rough layout of the importance of various features
+    simple_criterion = [("libvpx", 20),("264",10), ("265",3),
+                        ("svtav1",5),("libopus", 1)]
+    for criterion in simple_criterion:
+        if version.find(criterion[0]) >= 0:
+            score += criterion[1]
+    #obtain rough compile year from copyright information
+    copyright_index = version.find('2000-2')
+    if copyright_index >= 0:
+        copyright_year = version[copyright_index+6:copyright_index+9]
+        if copyright_year.isnumeric():
+            score += int(copyright_year)
+    return score
+    
+if "VHS_FORCE_FFMPEG_PATH" in os.environ:
+    ffmpeg_path = os.environ.get("VHS_FORCE_FFMPEG_PATH")
+else:
+    ffmpeg_paths = []
+    try:
+        from imageio_ffmpeg import get_ffmpeg_exe
+        imageio_ffmpeg_path = get_ffmpeg_exe()
+        ffmpeg_paths.append(imageio_ffmpeg_path)
+    except:
+        if "VHS_USE_IMAGEIO_FFMPEG" in os.environ:
+            raise
+        logger.warn("Failed to import imageio_ffmpeg")
+    if "VHS_USE_IMAGEIO_FFMPEG" in os.environ:
+        ffmpeg_path = imageio_ffmpeg_path
+    else:
+        system_ffmpeg = shutil.which("ffmpeg")
+        if system_ffmpeg is not None:
+            ffmpeg_paths.append(system_ffmpeg)
+        if len(ffmpeg_paths) == 0:
+            logger.error("No valid ffmpeg found.")
+            ffmpeg_path = None
+        elif len(ffmpeg_paths) == 1:
+            #Evaluation of suitability isn't required, can take sole option
+            #to reduce startup time
+            ffmpeg_path = ffmpeg_paths[0]
+        else:
+            ffmpeg_path = max(ffmpeg_paths, key=ffmpeg_suitability)
+            
 supported_model_extensions = set(['.pt', '.pth', '.bin', '.safetensors'])
 
 folder_paths.folder_names_and_paths["pretrained_model"] = (
@@ -185,7 +235,7 @@ class PoseGenVideo:
         if accelerate:
             video = batch_images_interpolation_tool(video, frame_inter_model, inter_frames=fi_step-1)
            
-        
+        '''
         ref_image_tensor = pose_transform(Image.fromarray(ref_image_pil))  # (c, h, w)
         ref_image_tensor = ref_image_tensor.unsqueeze(1).unsqueeze(
             0
@@ -194,8 +244,8 @@ class PoseGenVideo:
             ref_image_tensor, "b c f h w -> b c (repeat f) h w", repeat=video.shape[2]
         ) 
               
-        #video = torch.cat([ref_image_tensor, pose_tensor[:,:,:video.shape[2]], video], dim=0)
-
+        video = torch.cat([ref_image_tensor, pose_tensor[:,:,:video.shape[2]], video], dim=0)
+        '''
         outputs = []
         video = rearrange(video, "b c t h w -> t b c h w")
         for x in video:
@@ -241,6 +291,20 @@ class RefImagePath:
 def load_reference_image(ref_image_path: str):
     return (ref_image_path,) # if return only one node,has to add comma
   
+def get_audio(file, start_time=0, duration=0):
+    args = [ffmpeg_path, "-v", "error", "-i", file]
+    if start_time > 0:
+        args += ["-ss", str(start_time)]
+    if duration > 0:
+        args += ["-t", str(duration)]
+    try:
+        res =  subprocess.run(args + ["-f", "wav", "-"],
+                              stdout=subprocess.PIPE, check=True).stdout
+    except subprocess.CalledProcessError as e:
+        logger.warning(f"Failed to extract audio from: {file}")
+        return False
+    return res
+    
 class AudioPath:
     @classmethod
     def INPUT_TYPES(s):
@@ -248,18 +312,20 @@ class AudioPath:
             "required": {
                 "audio_path": ("STRING", {"default": "X://insert/path/audio.wav", "aniportrait_path_extensions": audio_extensions}),
             },
+            "optional" : {"seek_seconds": ("FLOAT", {"default": 0, "min": 0})}
         }
 
     CATEGORY = "AniPortrait 🎥Video"
 
-    RETURN_TYPES = ("Audio_Path",)
-    RETURN_NAMES = ("audio_path",)
+    RETURN_TYPES = ("Audio_Path", "VHS_AUDIO",)
+    RETURN_NAMES = ("audio_path", "audio",)
     FUNCTION = "load_audio"
 
     def load_audio(self, **kwargs):
         if kwargs['audio_path'] is None or validate_path(kwargs['audio_path']) != True:
             raise Exception("reference audio path is not a valid path: " + kwargs['audio_path'])
-        return load_reference_audio(**kwargs)
+        audio = get_audio(kwargs['audio_path'], start_time=kwargs["seek_seconds"])
+        return (load_reference_audio(kwargs['audio_path']), lambda : audio)
 
     @classmethod
     def IS_CHANGED(s, audio_path, **kwargs):
@@ -270,14 +336,16 @@ class AudioPath:
         return validate_path(audio_path, allow_none=True)
 
 def load_reference_audio(audio_path: str):
-    return (audio_path,) # if return only one node,has to add comma
+    return (audio_path) # if return only one node,has to add comma
       
 class GenerateRefPose:
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
-                "video": ("AniPortrait_Video",),
+                "image": ("IMAGE",),
+                "frame_count": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
+                "fps": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
             },
         }
 
@@ -288,28 +356,21 @@ class GenerateRefPose:
     FUNCTION = "generate_ref_pose"
     
     def generate_ref_pose(self, **kwargs):
-        if kwargs['video'] is None or validate_path(kwargs['video']) != True:
-            raise Exception("reference video path is not a valid path: " + kwargs['video'])
+
         lmk_extractor = LMKExtractor()
 
-        cap = cv2.VideoCapture(kwargs['video'])
+        total_frames = kwargs['frame_count']
 
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        fps = cap.get(cv2.CAP_PROP_FPS)  
-
-        pbar = tqdm(range(total_frames), desc="processing ...")
+        fps = kwargs['fps']
     
         trans_mat_list = []
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
 
-            pbar.update(1)
-            result = lmk_extractor(frame)
-            trans_mat_list.append(result['trans_mat'].astype(np.float32))
-        cap.release()
-
+        frames = (kwargs['image'].numpy() * 255).astype(np.uint8)
+        for i, frame_pil in enumerate(tqdm(frames)):
+            image_np = cv2.cvtColor(np.array(frame_pil), cv2.COLOR_RGB2BGR)
+            result = lmk_extractor(image_np)
+            trans_mat_list.append(result['trans_mat'].astype(np.float32))            
+        
         trans_mat_arr = np.array(trans_mat_list)
 
         # compute delta pose
@@ -338,14 +399,7 @@ class GenerateRefPose:
         save_path = os.path.join(save_dir, f"{time_str}_pose.npy")
         np.save(save_path, pose_arr_smooth)
         return(save_path,)
-
-    @classmethod
-    def IS_CHANGED(s, video, **kwargs):
-        return hash_path(video)
-
-    @classmethod
-    def VALIDATE_INPUTS(s, video, **kwargs):
-        return validate_path(video, allow_none=True)   
+        
         
 def matrix_to_euler_and_translation(matrix):
     rotation_matrix = matrix[:3, :3]
@@ -364,20 +418,19 @@ def smooth_pose_seq(pose_seq, window_size=5):
         smoothed_pose_seq[i] = np.mean(pose_seq[start:end], axis=0)
 
     return smoothed_pose_seq
-        
+ 
+
 class Audio2Video:
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
-                "ref_image_path": ("RefImage_Path",),
+                "ref_image": ("IMAGE",),
                 "height": ("INT", {"default": 512, "min": 0, "max": 1024, "step": 1}),
                 "width": ("INT", {"default": 512, "min": 0, "max": 1024, "step": 1}),
-                "frames": ("INT", {"default": 0, "min":0, "max": 9999, "step": 1}),
                 "seed": ("INT", {"default": 42}),
                 "cfg": ("FLOAT", {"default": 3.5, "min": 0.0, "max": 10.0, "step": 0.1}),
                 "steps": ("INT", {"default": 25, "min":0, "max": 50, "step": 1}),
-                "frame_per_second": ("INT", {"default": 30, "min":0, "max": 240, "step": 1}),
                 "vae_path": ([audio_config.pretrained_vae_path],),
                 "model": ([audio_config.pretrained_base_model_path],),
                 "weight_dtype": (["fp16", "fp32"],),
@@ -387,30 +440,24 @@ class Audio2Video:
                 "image_encoder_path": ([audio_config.image_encoder_path],),
                 "denoising_unet_path": ([audio_config.denoising_unet_path],),
                 "reference_unet_path": ([audio_config.reference_unet_path],),
-                "pose_guider_path": ([audio_config.pose_guider_path],),    
-                "save_output": ("BOOLEAN", {"default": True}),            
+                "pose_guider_path": ([audio_config.pose_guider_path],),           
             },
             "optional": {
-                "video": ("AniPortrait_Video",),
+                "images": ("IMAGE", ),
                 "audio_path": ("Audio_Path",),
                 "ref_pose_path": ("FILENAMES", ),
+                "fps": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
             },
         }
 
-    RETURN_TYPES = ("ANIPORTRAIT_FILENAMES",)
-    RETURN_NAMES = ("Audio2Video",)
-    OUTPUT_NODE = True
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("images",)
+    #OUTPUT_NODE = True
     CATEGORY = "AniPortrait 🎥Video"
     FUNCTION = "audio_2_video"
 
-    def audio_2_video(self, ref_image_path, height, width, frames, seed, cfg, steps, frame_per_second, vae_path, model, weight_dtype, accelerate, fi_step, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path, save_output=True, audio_path=None, ref_pose_path=None, video=None):
-        # get output information
-        save_dir = (
-            folder_paths.get_output_directory()
-            if save_output
-            else folder_paths.get_temp_directory()
-        )
-        if audio_path:
+    def audio_2_video(self, ref_image, height, width, seed, cfg, steps, vae_path, model, weight_dtype, accelerate, fi_step, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path, fps=0, images=None, ref_pose_path=None, audio_path=None):
+        if ref_pose_path:
             if weight_dtype == "fp16":
                 weight_dtype = torch.float16
             else:
@@ -463,9 +510,6 @@ class Audio2Video:
             scheduler=scheduler,
             )
             pipe = pipe.to("cuda", dtype=weight_dtype)
-
-            date_str = datetime.now().strftime("%Y%m%d")
-            time_str = datetime.now().strftime("%H%M%S")
             
             lmk_extractor = LMKExtractor()
             vis = FaceMeshVisualizer(forehead_edge=False)
@@ -473,10 +517,8 @@ class Audio2Video:
             if accelerate:
                 frame_inter_model = init_frame_interpolation_model()
         
-            ref_name = Path(ref_image_path).stem
-            audio_name = Path(audio_path).stem
-            
-            ref_image_pil = Image.open(ref_image_path).convert("RGB")
+            ref_image = torch.squeeze(ref_image, 0)
+            ref_image_pil = (ref_image.numpy() * 255).astype(np.uint8)
             ref_image_np = cv2.cvtColor(np.array(ref_image_pil), cv2.COLOR_RGB2BGR)
             ref_image_np = cv2.resize(ref_image_np, (height, width))
                 
@@ -484,7 +526,6 @@ class Audio2Video:
             assert face_result is not None, "No face detected."
             lmks = face_result['lmks'].astype(np.float32)
             ref_pose = vis.draw_landmarks((ref_image_np.shape[1], ref_image_np.shape[0]), lmks, normed=True)
-                
                 
             sample = prepare_audio_feature(audio_path, wav2vec_model_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), audio_infer_config['a2m_model']['model_path']))
             sample['audio_feature'] = torch.from_numpy(sample['audio_feature']).float().cuda()
@@ -510,9 +551,10 @@ class Audio2Video:
 
             pose_list = []
             pose_tensor_list = []
-            print(f"pose video has {len(pose_images)} frames, with {frame_per_second} fps")
+            print(f"pose video has {len(pose_images)} frames")
             pose_transform = transforms.Compose([transforms.Resize((height, width)), transforms.ToTensor()])
-            frame_length = len(pose_images) if frames==0 else frames
+            
+            frame_length = len(pose_images)
             for pose_image_np in pose_images[: frame_length]:
                 pose_image_pil = Image.fromarray(cv2.cvtColor(pose_image_np, cv2.COLOR_BGR2RGB))
                 pose_tensor_list.append(pose_transform(pose_image_pil))
@@ -530,7 +572,7 @@ class Audio2Video:
             pose_tensor = pose_tensor.unsqueeze(0)
 
             video = pipe(
-                ref_image_pil,
+                Image.fromarray(ref_image_pil),
                 pose_list,
                 ref_pose,
                 width,
@@ -543,8 +585,8 @@ class Audio2Video:
             
             if accelerate:
                 video = batch_images_interpolation_tool(video, frame_inter_model, inter_frames=fi_step-1)
-
-            ref_image_tensor = pose_transform(ref_image_pil)  # (c, h, w)
+            '''
+            ref_image_tensor = pose_transform(Image.fromarray(ref_image_pil))  # (c, h, w)
             ref_image_tensor = ref_image_tensor.unsqueeze(1).unsqueeze(
                 0
             )  # (1, c, 1, h, w)
@@ -553,19 +595,19 @@ class Audio2Video:
             )
 
             video = torch.cat([ref_image_tensor, pose_tensor[:,:,:video.shape[2]], video], dim=0)
+            '''
+            outputs = []
+            video = rearrange(video, "b c t h w -> t b c h w")
+            for x in video:
+                x = torchvision.utils.make_grid(x, nrow=1)  # (c h w)
+                x = x.transpose(0, 1).transpose(1, 2).squeeze(-1)  # (h w c)
+                x = (x * 255).numpy().astype(np.uint8)
+                x = Image.fromarray(x)
+                outputs.append(x)     
             
-            save_path = f"{save_dir}/{ref_name}_{audio_name}_{height}x{width}_{int(cfg)}_{time_str}_noaudio.mp4"
-            save_videos_grid(
-                video,
-                save_path,
-                n_rows=3,
-                fps=frame_per_second,
-            )
-                
-            stream = ffmpeg.input(save_path)
-            audio = ffmpeg.input(audio_path)
-            ffmpeg.output(stream.video, audio.audio, save_path.replace('_noaudio.mp4', '.mp4'), vcodec='copy', acodec='aac', shortest=None).run()
-            os.remove(save_path)        
+            iterable = (x for x in outputs)
+            gen_images = torch.from_numpy(np.fromiter(iterable, np.dtype((np.float32, (height, width, 3))))) / 255.0      
+            return (gen_images,)        
 
         else:
             if weight_dtype == "fp16":
@@ -612,19 +654,18 @@ class Audio2Video:
             )
             pipe = pipe.to("cuda", dtype=weight_dtype)
 
-            date_str = datetime.now().strftime("%Y%m%d")
-            time_str = datetime.now().strftime("%H%M%S")
-            
             lmk_extractor = LMKExtractor()
             vis = FaceMeshVisualizer(forehead_edge=False)        
             
             if accelerate:
                 frame_inter_model = init_frame_interpolation_model()
             
-            ref_name = Path(ref_image_path).stem
-            pose_name = Path(video).stem
+            #ref_name = Path(ref_image_path).stem
+            #pose_name = Path(video).stem
             
-            ref_image_pil = Image.open(ref_image_path).convert("RGB")
+            #ref_image_pil = Image.open(ref_image_path).convert("RGB")
+            ref_image = torch.squeeze(ref_image, 0)
+            ref_image_pil = (ref_image.numpy() * 255).astype(np.uint8)
             ref_image_np = cv2.cvtColor(np.array(ref_image_pil), cv2.COLOR_RGB2BGR)
             ref_image_np = cv2.resize(ref_image_np, (height, width))
                 
@@ -633,27 +674,29 @@ class Audio2Video:
             lmks = face_result['lmks'].astype(np.float32)
             ref_pose = vis.draw_landmarks((ref_image_np.shape[1], ref_image_np.shape[0]), lmks, normed=True)
                 
-            source_images = read_frames(video)
-            src_fps = get_fps(video)
-            print(f"source video has {len(source_images)} frames, with {src_fps} fps")
+            #source_images = read_frames(video)
+            #src_fps = get_fps(video)
+            print(f"source video has {len(images)} frames, with {fps} fps")
             pose_transform = transforms.Compose(
                 [transforms.Resize((height, width)), transforms.ToTensor()]
             )      
                        
             step = 1
-            if src_fps == 60:
-                src_fps = 30
+            if fps == 60:
+                fps = 30
                 step = 2
             
             pose_trans_list = []
             verts_list = []
             bs_list = []
             src_tensor_list = []
-            frame_length = len(source_images) if frames==0 else frames*step
-            for src_image_pil in source_images[: frame_length: step]:
-                src_tensor_list.append(pose_transform(src_image_pil))
+            frame_length = len(images)
+            for src_image_pil in images[: frame_length: step]:
+                src_image_pil = (src_image_pil.numpy() * 255).astype(np.uint8)
+                src_tensor_list.append(pose_transform(Image.fromarray(src_image_pil)))
             sub_step = step*fi_step if accelerate else step
-            for src_image_pil in source_images[: frame_length: sub_step]:
+            for src_image_pil in images[: frame_length: sub_step]:
+                src_image_pil = (src_image_pil.numpy() * 255).astype(np.uint8)
                 src_img_np = cv2.cvtColor(np.array(src_image_pil), cv2.COLOR_RGB2BGR)
                 frame_height, frame_width, _ = src_img_np.shape
                 src_img_result = lmk_extractor(src_img_np)
@@ -689,7 +732,7 @@ class Audio2Video:
             src_tensor = src_tensor.unsqueeze(0)
             
             video_gen = pipe(
-                ref_image_pil,
+                Image.fromarray(ref_image_pil),
                 pose_list,
                 ref_pose,
                 width,
@@ -702,7 +745,7 @@ class Audio2Video:
 
             if accelerate:
                 video_gen = batch_images_interpolation_tool(video_gen, frame_inter_model, inter_frames=fi_step-1)
-
+            '''
             ref_image_tensor = pose_transform(ref_image_pil)  # (c, h, w)
             ref_image_tensor = ref_image_tensor.unsqueeze(1).unsqueeze(
                 0
@@ -712,30 +755,17 @@ class Audio2Video:
             )
             
             video_gen = torch.cat([ref_image_tensor, video_gen, src_tensor[:,:,:video_gen.shape[2]]], dim=0)
-            save_path = f"{save_dir}/{ref_name}_{pose_name}_{height}x{width}_{int(cfg)}_{time_str}_noaudio.mp4"
-            save_videos_grid(
-                video_gen,
-                save_path,
-                n_rows=3,
-                fps=src_fps if frame_per_second==0 else frame_per_second,
-            )
+            '''
+            outputs = []
+            video = rearrange(video_gen, "b c t h w -> t b c h w")
+            for x in video:
+                x = torchvision.utils.make_grid(x, nrow=1)  # (c h w)
+                x = x.transpose(0, 1).transpose(1, 2).squeeze(-1)  # (h w c)
+                x = (x * 255).numpy().astype(np.uint8)
+                x = Image.fromarray(x)
+                outputs.append(x)     
             
-            audio_output = 'audio_from_video.aac'
-            # extract audio
-            ffmpeg.input(video).output(audio_output, acodec='copy').run()
-            # merge audio and video
-            stream = ffmpeg.input(save_path)
-            audio = ffmpeg.input(audio_output)
-            ffmpeg.output(stream.video, audio.audio, save_path.replace('_noaudio.mp4', '.mp4'), vcodec='copy', acodec='aac', shortest=None).run()
-            
-            os.remove(save_path)
-            os.remove(audio_output)
-        
-        save_prune_path = save_path.replace('_noaudio.mp4', '.mp4')
-        previews = [
-            {
-                "save_prune_path": save_prune_path,
-                "type": "output" if save_output else "temp",
-            }
-        ]            
-        return {"ui": {"previews": previews}, "result": ((save_output, save_prune_path),)}      
+            iterable = (x for x in outputs)
+            gen_images = torch.from_numpy(np.fromiter(iterable, np.dtype((np.float32, (height, width, 3))))) / 255.0      
+            return (gen_images,)        
+      
