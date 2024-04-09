@@ -3,14 +3,14 @@
 
 ② Modify the current code and support chain with the [VHS nodes](https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite), i just found that comfyUI IMAGE type requires the torch float32 datatype, and AniPortrait heavily used numpy of image unit8 datatype,so i just changed my mind from my own image/video upload and generation nodes to the prevelance SOTA VHS image/video upload and video combined nodes,it WYSIWYG and inteactive well and instantly render the result
 - ✅ [2024/04/09] raw video to pose video with reference image(aka self-driven)
-- 🔲 audio driven
-- 🔲 face reenacment
+- ✅ [2024/04/09] audio driven
+- ✅ [2024/04/09] face reenacment
 ### audio driven combined with reference image and reference video
-![audio2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/27a0a680-ebd0-47ec-a26a-fd31f7fb6600)
+![audio2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/c498a62e-ffa0-4cbc-a39d-b7daec586001)
 <table class="center">
 <tr>
     <td width=100% style="border: none">
-        <video controls autoplay loop src="https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/51b1a7ab-854d-4f2d-8ba8-2fc0b92764dd" muted="false"></video>
+        <video controls autoplay loop src="https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/d619f8b6-32ca-4aa2-8b18-d0649e3243ff" muted="false"></video>
     </td>
 </tr>
 </table>
@@ -26,11 +26,11 @@
 </table>
 
 ### face reenacment
-![face_reenacment](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/51a1f2cd-4756-4ec9-ba9d-aa2e9769eb43)
+![face_reenacment](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/2bb488ee-ec20-44d1-a941-542b4e0be8bc)
 <table class="center">
 <tr>
     <td width=100% style="border: none">
-        <video controls autoplay loop src="https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/72f01543-f33b-44d7-b323-babea56b5f12" muted="false"></video>
+        <video controls autoplay loop src="https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/931d7661-8c79-4747-be5b-b1d361b7e7e9" muted="false"></video>
     </td>
 </tr>
 </table>
