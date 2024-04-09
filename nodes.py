@@ -35,6 +35,7 @@ from .src.utils.pose_util import project_points, project_points_with_trans
 
 from scipy.spatial.transform import Rotation as R
 from scipy.interpolate import interp1d
+from einops import rearrange
 
 supported_model_extensions = set(['.pt', '.pth', '.bin', '.safetensors'])
 
@@ -63,15 +64,14 @@ class PoseGenVideo:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "ref_image_path": ("RefImage_Path",),
-                "pose_video_path": ("PoseVideo_Path", ),
+                "ref_image": ("IMAGE",),
+                "pose_images": ("IMAGE", ),
+                "frame_count": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
                 "height": ("INT", {"default": 512, "min": 0, "max": 1024, "step": 1}),
                 "width": ("INT", {"default": 512, "min": 0, "max": 1024, "step": 1}),
-                "frames": ("INT", {"default": 0, "min":0, "max": 9999, "step": 1}),
                 "seed": ("INT", {"default": 42}),
                 "cfg": ("FLOAT", {"default": 3.5, "min": 0.0, "max": 10.0, "step": 0.1}),
                 "steps": ("INT", {"default": 25, "min":0, "max": 50, "step": 1}),
-                "frame_per_second": ("INT", {"default": 0, "min":0, "max": 240, "step": 1}),
                 "vae_path": ([animation_config.pretrained_vae_path],),
                 "model": ([animation_config.pretrained_base_model_path],),
                 "weight_dtype": (["fp16", "fp32"],),
@@ -81,24 +81,17 @@ class PoseGenVideo:
                 "image_encoder_path": ([animation_config.image_encoder_path],),
                 "denoising_unet_path": ([animation_config.denoising_unet_path],),
                 "reference_unet_path": ([animation_config.reference_unet_path],),
-                "pose_guider_path": ([animation_config.pose_guider_path],),      
-                "save_output": ("BOOLEAN", {"default": True}),           
+                "pose_guider_path": ([animation_config.pose_guider_path],),             
             },
         }
 
-    RETURN_TYPES = ("ANIPORTRAIT_FILENAMES",)
-    RETURN_NAMES = ("Pose2Video",)
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("images",)
     OUTPUT_NODE = True
     CATEGORY = "AniPortrait 🎥Video"
     FUNCTION = "pose_generate_video"
 
-    def pose_generate_video(self, ref_image_path, pose_video_path, height, width, frames, seed, cfg, steps, frame_per_second, vae_path, model, weight_dtype, accelerate, fi_step, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path, save_output=True):
-        # get output information
-        save_dir = (
-            folder_paths.get_output_directory()
-            if save_output
-            else folder_paths.get_temp_directory()
-        )
+    def pose_generate_video(self, ref_image, pose_images, frame_count, height, width, seed, cfg, steps, vae_path, model, weight_dtype, accelerate, fi_step, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path):
         
         if weight_dtype == "fp16":
             weight_dtype = torch.float16
@@ -143,7 +136,6 @@ class PoseGenVideo:
         )
         pipe = pipe.to(device, dtype=weight_dtype)
         
-        time_str = datetime.now().strftime("%H%M%S")
 
         lmk_extractor = LMKExtractor()
         vis = FaceMeshVisualizer(forehead_edge=False)   
@@ -151,9 +143,10 @@ class PoseGenVideo:
         if accelerate:
             frame_inter_model = init_frame_interpolation_model()
         
-        ref_name = Path(ref_image_path).stem
-        pose_name = Path(pose_video_path).stem
-        ref_image_pil = Image.open(ref_image_path).convert("RGB")
+        
+        ref_image = torch.squeeze(ref_image, 0)
+        ref_image_pil = (ref_image.numpy() * 255).astype(np.uint8)
+
         ref_image_np = cv2.cvtColor(np.array(ref_image_pil), cv2.COLOR_RGB2BGR)
         ref_image_np = cv2.resize(ref_image_np, (height, width))
             
@@ -164,18 +157,18 @@ class PoseGenVideo:
         
         pose_list = []
         pose_tensor_list = []
-        pose_images = read_frames(pose_video_path)
-        src_fps = get_fps(pose_video_path)
-        print(f"pose video has {len(pose_images)} frames, with {src_fps} fps")
+        print(f"pose video has {frame_count} frames")
         pose_transform = transforms.Compose(
             [transforms.Resize((height, width)), transforms.ToTensor()]
         )
-        frame_length = len(pose_images) if frames==0 else frames
-        for pose_image_pil in pose_images[: frame_length]:
-            pose_tensor_list.append(pose_transform(pose_image_pil))
+        
+        for pose_image_pil in pose_images[: frame_count]:
+            pose_image_pil = (pose_image_pil.numpy() * 255).astype(np.uint8)
+            pose_tensor_list.append(pose_transform(Image.fromarray(pose_image_pil)))
         sub_step = fi_step if accelerate else 1
-        for pose_image_pil in pose_images[: frame_length: sub_step]:
-            pose_image_np = cv2.cvtColor(np.array(pose_image_pil), cv2.COLOR_RGB2BGR)
+        for pose_image_pil in pose_images[: frame_count: sub_step]:
+            pose_image = (pose_image_pil.numpy() * 255).astype(np.uint8)
+            pose_image_np = cv2.cvtColor(np.array(pose_image), cv2.COLOR_RGB2BGR)
             pose_image_np = cv2.resize(pose_image_np,  (width, height))
             pose_list.append(pose_image_np)       
          
@@ -187,12 +180,13 @@ class PoseGenVideo:
         pose_tensor = pose_tensor.transpose(0, 1)
         pose_tensor = pose_tensor.unsqueeze(0) 
         
-        video = pipe(ref_image_pil, pose_list, ref_pose, width, height, video_length, steps, cfg, generator=generator,).videos        
+        video = pipe(Image.fromarray(ref_image_pil), pose_list, ref_pose, width, height, video_length, steps, cfg, generator=generator,).videos        
         
         if accelerate:
             video = batch_images_interpolation_tool(video, frame_inter_model, inter_frames=fi_step-1)
-            
-        ref_image_tensor = pose_transform(ref_image_pil)  # (c, h, w)
+           
+        
+        ref_image_tensor = pose_transform(Image.fromarray(ref_image_pil))  # (c, h, w)
         ref_image_tensor = ref_image_tensor.unsqueeze(1).unsqueeze(
             0
         )  # (1, c, 1, h, w)
@@ -200,30 +194,21 @@ class PoseGenVideo:
             ref_image_tensor, "b c f h w -> b c (repeat f) h w", repeat=video.shape[2]
         ) 
               
-        video = torch.cat([ref_image_tensor, pose_tensor[:,:,:video.shape[2]], video], dim=0)
-        save_path = f"{save_dir}/{ref_name}_{pose_name}_{height}x{width}_{int(cfg)}_{time_str}_noaudio.mp4"
-        save_videos_grid(video, save_path, n_rows=3, fps=src_fps if frame_per_second==0 else frame_per_second)        
+        #video = torch.cat([ref_image_tensor, pose_tensor[:,:,:video.shape[2]], video], dim=0)
 
-        audio_output = os.path.join(save_dir, 'audio_from_video.aac')
-        # extract audio
-        ffmpeg.input(pose_video_path).output(audio_output, acodec='copy').run()
-        # merge audio and video
-        stream = ffmpeg.input(save_path)
-        audio = ffmpeg.input(audio_output)
-        ffmpeg.output(stream.video, audio.audio, save_path.replace('_noaudio.mp4', '.mp4'), vcodec='copy', acodec='aac', shortest=None).run()
+        outputs = []
+        video = rearrange(video, "b c t h w -> t b c h w")
+        for x in video:
+            x = torchvision.utils.make_grid(x, nrow=1)  # (c h w)
+            x = x.transpose(0, 1).transpose(1, 2).squeeze(-1)  # (h w c)
+            x = (x * 255).numpy().astype(np.uint8)
+            x = Image.fromarray(x)
+            outputs.append(x)     
             
-        os.remove(save_path)
-        os.remove(audio_output)   
-        
-        save_prune_path = save_path.replace('_noaudio.mp4', '.mp4')
-        previews = [
-            {
-                "save_prune_path": save_prune_path,
-                "type": "output" if save_output else "temp",
-            }
-        ]            
-        return {"ui": {"previews": previews}, "result": ((save_output, save_prune_path),)}               
-        return (save_path.replace('_noaudio.mp4', '.mp4'),)
+        iterable = (x for x in outputs)
+        images = torch.from_numpy(np.fromiter(iterable, np.dtype((np.float32, (height, width, 3))))) / 255.0      
+        return (images,)
+
         
 class RefImagePath:
     @classmethod
