@@ -1,0 +1,627 @@
+{
+  "last_node_id": 9,
+  "last_link_id": 10,
+  "nodes": [
+    {
+      "id": 2,
+      "type": "VHS_VideoInfo",
+      "pos": [
+        -2094,
+        139
+      ],
+      "size": {
+        "0": 393,
+        "1": 206
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video_info",
+          "type": "VHS_VIDEOINFO",
+          "link": 1,
+          "label": "video_info"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "source_fps🟨",
+          "type": "FLOAT",
+          "links": [
+            3
+          ],
+          "shape": 3,
+          "label": "source_fps🟨",
+          "slot_index": 0
+        },
+        {
+          "name": "source_frame_count🟨",
+          "type": "INT",
+          "links": [
+            5
+          ],
+          "shape": 3,
+          "label": "source_frame_count🟨",
+          "slot_index": 1
+        },
+        {
+          "name": "source_duration🟨",
+          "type": "FLOAT",
+          "links": null,
+          "shape": 3,
+          "label": "source_duration🟨"
+        },
+        {
+          "name": "source_width🟨",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "source_width🟨"
+        },
+        {
+          "name": "source_height🟨",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "source_height🟨"
+        },
+        {
+          "name": "loaded_fps🟦",
+          "type": "FLOAT",
+          "links": null,
+          "shape": 3,
+          "label": "loaded_fps🟦"
+        },
+        {
+          "name": "loaded_frame_count🟦",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "loaded_frame_count🟦"
+        },
+        {
+          "name": "loaded_duration🟦",
+          "type": "FLOAT",
+          "links": null,
+          "shape": 3,
+          "label": "loaded_duration🟦"
+        },
+        {
+          "name": "loaded_width🟦",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "loaded_width🟦"
+        },
+        {
+          "name": "loaded_height🟦",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "loaded_height🟦"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VHS_VideoInfo"
+      },
+      "widgets_values": {}
+    },
+    {
+      "id": 4,
+      "type": "CR Float To Integer",
+      "pos": [
+        -2083,
+        433
+      ],
+      "size": [
+        315,
+        78
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "_float",
+          "type": "FLOAT",
+          "link": 3,
+          "widget": {
+            "name": "_float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            4
+          ],
+          "shape": 3,
+          "label": "INT",
+          "slot_index": 0
+        },
+        {
+          "name": "show_help",
+          "type": "STRING",
+          "links": null,
+          "shape": 3,
+          "label": "show_help"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CR Float To Integer"
+      },
+      "widgets_values": [
+        0
+      ]
+    },
+    {
+      "id": 3,
+      "type": "AniPortrait_Generate_Ref_Pose",
+      "pos": [
+        -1687,
+        429
+      ],
+      "size": [
+        315,
+        82
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 2,
+          "label": "image"
+        },
+        {
+          "name": "frame_count",
+          "type": "INT",
+          "link": 5,
+          "widget": {
+            "name": "frame_count"
+          }
+        },
+        {
+          "name": "fps",
+          "type": "INT",
+          "link": 4,
+          "widget": {
+            "name": "fps"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "ref_pose_path",
+          "type": "FILENAMES",
+          "links": [
+            6
+          ],
+          "shape": 3,
+          "label": "ref_pose_path"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AniPortrait_Generate_Ref_Pose"
+      },
+      "widgets_values": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 5,
+      "type": "AniPortrait_Audio2Video",
+      "pos": [
+        -1289,
+        74
+      ],
+      "size": [
+        315,
+        502
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "ref_image",
+          "type": "IMAGE",
+          "link": 7,
+          "label": "ref_image"
+        },
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": null,
+          "label": "images"
+        },
+        {
+          "name": "audio_path",
+          "type": "Audio_Path",
+          "link": 8,
+          "label": "audio_path"
+        },
+        {
+          "name": "ref_pose_path",
+          "type": "FILENAMES",
+          "link": 6,
+          "label": "ref_pose_path",
+          "slot_index": 3
+        },
+        {
+          "name": "fps",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "fps"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            9
+          ],
+          "shape": 3,
+          "label": "images",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AniPortrait_Audio2Video"
+      },
+      "widgets_values": [
+        512,
+        512,
+        1653,
+        "randomize",
+        3.5,
+        25,
+        "pretrained_model/sd-vae-ft-mse",
+        "pretrained_model/stable-diffusion-v1-5",
+        "fp16",
+        true,
+        3,
+        "pretrained_model/motion_module.pth",
+        "pretrained_model/image_encoder",
+        "pretrained_model/denoising_unet.pth",
+        "pretrained_model/reference_unet.pth",
+        "pretrained_model/pose_guider.pth",
+        0
+      ]
+    },
+    {
+      "id": 7,
+      "type": "LoadImage",
+      "pos": [
+        -1674,
+        31
+      ],
+      "size": [
+        315,
+        314
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            7
+          ],
+          "shape": 3,
+          "label": "IMAGE",
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "MASK"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "258800-15040420314853 (3).jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "AniPortrait_Audio_Path",
+      "pos": [
+        -2085,
+        -66
+      ],
+      "size": {
+        "0": 315,
+        "1": 102
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "audio_path",
+          "type": "Audio_Path",
+          "links": [
+            8
+          ],
+          "shape": 3,
+          "label": "audio_path",
+          "slot_index": 0
+        },
+        {
+          "name": "audio",
+          "type": "VHS_AUDIO",
+          "links": [
+            10
+          ],
+          "shape": 3,
+          "label": "audio"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AniPortrait_Audio_Path"
+      },
+      "widgets_values": [
+        "/home/qm/test.wav",
+        0
+      ]
+    },
+    {
+      "id": 9,
+      "type": "VHS_VideoCombine",
+      "pos": [
+        -925,
+        39
+      ],
+      "size": [
+        315,
+        599
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 9,
+          "label": "images"
+        },
+        {
+          "name": "audio",
+          "type": "VHS_AUDIO",
+          "link": 10,
+          "label": "audio",
+          "slot_index": 1
+        },
+        {
+          "name": "batch_manager",
+          "type": "VHS_BatchManager",
+          "link": null,
+          "label": "batch_manager"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Filenames",
+          "type": "VHS_FILENAMES",
+          "links": null,
+          "shape": 3,
+          "label": "Filenames"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VHS_VideoCombine"
+      },
+      "widgets_values": {
+        "frame_rate": 30,
+        "loop_count": 0,
+        "filename_prefix": "Aniportrait",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 19,
+        "save_metadata": true,
+        "pingpong": false,
+        "save_output": true,
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {
+            "filename": "Aniportrait_00002-audio.mp4",
+            "subfolder": "",
+            "type": "output",
+            "format": "video/h264-mp4"
+          }
+        }
+      }
+    },
+    {
+      "id": 1,
+      "type": "VHS_LoadVideo",
+      "pos": [
+        -2379.420360260546,
+        -41.02694299652427
+      ],
+      "size": [
+        235.1999969482422,
+        491.1999969482422
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "batch_manager",
+          "type": "VHS_BatchManager",
+          "link": null,
+          "label": "batch_manager"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            2
+          ],
+          "shape": 3,
+          "label": "IMAGE",
+          "slot_index": 0
+        },
+        {
+          "name": "frame_count",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "frame_count"
+        },
+        {
+          "name": "audio",
+          "type": "VHS_AUDIO",
+          "links": null,
+          "shape": 3,
+          "label": "audio"
+        },
+        {
+          "name": "video_info",
+          "type": "VHS_VIDEOINFO",
+          "links": [
+            1
+          ],
+          "shape": 3,
+          "label": "video_info",
+          "slot_index": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VHS_LoadVideo"
+      },
+      "widgets_values": {
+        "video": "pose_ref_video.mp4",
+        "force_rate": 0,
+        "force_size": "Disabled",
+        "custom_width": 512,
+        "custom_height": 512,
+        "frame_load_cap": 0,
+        "skip_first_frames": 0,
+        "select_every_nth": 1,
+        "choose video to upload": "image",
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {
+            "frame_load_cap": 0,
+            "skip_first_frames": 0,
+            "force_rate": 0,
+            "filename": "pose_ref_video.mp4",
+            "type": "input",
+            "format": "video/mp4",
+            "select_every_nth": 1
+          }
+        }
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      3,
+      2,
+      0,
+      "VHS_VIDEOINFO"
+    ],
+    [
+      2,
+      1,
+      0,
+      3,
+      0,
+      "IMAGE"
+    ],
+    [
+      3,
+      2,
+      0,
+      4,
+      0,
+      "FLOAT"
+    ],
+    [
+      4,
+      4,
+      0,
+      3,
+      2,
+      "INT"
+    ],
+    [
+      5,
+      2,
+      1,
+      3,
+      1,
+      "INT"
+    ],
+    [
+      6,
+      3,
+      0,
+      5,
+      3,
+      "FILENAMES"
+    ],
+    [
+      7,
+      7,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      8,
+      8,
+      0,
+      5,
+      2,
+      "Audio_Path"
+    ],
+    [
+      9,
+      5,
+      0,
+      9,
+      0,
+      "IMAGE"
+    ],
+    [
+      10,
+      8,
+      1,
+      9,
+      1,
+      "VHS_AUDIO"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}
