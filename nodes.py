@@ -12,6 +12,7 @@ import numpy as np
 import cv2
 import torch
 import torchvision
+import random
 from tqdm import tqdm
 from diffusers import AutoencoderKL, DDIMScheduler
 from diffusers.pipelines.stable_diffusion import StableDiffusionPipeline
@@ -29,10 +30,11 @@ from .src.pipelines.pipeline_pose2vid_long import Pose2VideoPipeline
 from .src.utils.util import get_fps, read_frames, save_videos_grid, calculate_file_hash, get_sorted_dir_files_from_directory, get_audio, lazy_eval, hash_path, validate_path
 from .src.utils.frame_interpolation import init_frame_interpolation_model, batch_images_interpolation_tool
 from .src.audio_models.model import Audio2MeshModel
+from .src.audio_models.pose_model import Audio2PoseModel
 from .src.utils.audio_util import prepare_audio_feature
 from .src.utils.mp_utils  import LMKExtractor
 from .src.utils.draw_util import FaceMeshVisualizer
-from .src.utils.pose_util import project_points, project_points_with_trans
+from .src.utils.pose_util import project_points, project_points_with_trans, matrix_to_euler_and_translation, euler_and_translation_to_matrix, smooth_pose_seq
 
 from scipy.spatial.transform import Rotation as R
 from scipy.interpolate import interp1d
@@ -338,6 +340,7 @@ class AudioPath:
 def load_reference_audio(audio_path: str):
     return (audio_path) # if return only one node,has to add comma
       
+'''
 class GenerateRefPose:
     @classmethod
     def INPUT_TYPES(s):
@@ -418,7 +421,7 @@ def smooth_pose_seq(pose_seq, window_size=5):
         smoothed_pose_seq[i] = np.mean(pose_seq[start:end], axis=0)
 
     return smoothed_pose_seq
- 
+'''
 
 class Audio2Video:
     @classmethod
@@ -435,6 +438,7 @@ class Audio2Video:
                 "model": ([audio_config.pretrained_base_model_path],),
                 "weight_dtype": (["fp16", "fp32"],),
                 "accelerate": ("BOOLEAN", {"default": True}),
+                "length": ("INT", {"default": 0, "min":0, "max": 0xffffffffffffffff, "step": 1}),
                 "fi_step": ("INT", {"default": 3}),
                 "motion_module_path": ([audio_config.motion_module_path],),
                 "image_encoder_path": ([audio_config.image_encoder_path],),
@@ -445,7 +449,7 @@ class Audio2Video:
             "optional": {
                 "images": ("IMAGE", ),
                 "audio_path": ("Audio_Path",),
-                "ref_pose_path": ("FILENAMES", ),
+                #"ref_pose_path": ("FILENAMES", ),
                 "fps": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
             },
         }
@@ -456,8 +460,8 @@ class Audio2Video:
     CATEGORY = "AniPortrait 🎥Video"
     FUNCTION = "audio_2_video"
 
-    def audio_2_video(self, ref_image, height, width, seed, cfg, steps, vae_path, model, weight_dtype, accelerate, fi_step, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path, fps=0, images=None, ref_pose_path=None, audio_path=None):
-        if ref_pose_path:
+    def audio_2_video(self, ref_image, height, width, seed, cfg, steps, vae_path, model, weight_dtype, accelerate, length, fi_step, motion_module_path, image_encoder_path, denoising_unet_path, reference_unet_path, pose_guider_path, fps=0, images=None, audio_path=None):
+        if audio_path:
             if weight_dtype == "fp16":
                 weight_dtype = torch.float16
             else:
@@ -480,6 +484,10 @@ class Audio2Video:
             a2m_model.load_state_dict(torch.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), audio_infer_config['pretrained_model']['a2m_ckpt'])), strict=False)
             a2m_model.cuda().eval()
             
+            a2p_model = Audio2PoseModel(audio_infer_config['a2p_model'])
+            a2p_model.load_state_dict(torch.load(os.path.join(os.path.dirname(os.path.abspath(__file__)),audio_infer_config['pretrained_model']['a2p_ckpt'])), strict=False)
+            a2p_model.cuda().eval()       
+                 
             vae = AutoencoderKL.from_pretrained(vae_path,).to(device, dtype=weight_dtype)
             reference_unet = UNet2DConditionModel.from_pretrained(model,subfolder="unet",).to(dtype=weight_dtype, device=device)
 
@@ -536,13 +544,42 @@ class Audio2Video:
             pred = pred.squeeze().detach().cpu().numpy()
             pred = pred.reshape(pred.shape[0], -1, 3)
             pred = pred + face_result['lmks3d']
-                
-            pose_seq = np.load(ref_pose_path)
-            mirrored_pose_seq = np.concatenate((pose_seq, pose_seq[-2:0:-1]), axis=0)
-            cycled_pose_seq = np.tile(mirrored_pose_seq, (sample['seq_len'] // len(mirrored_pose_seq) + 1, 1))[:sample['seq_len']]
+            
+            if 'pose_temp' in audio_config and audio_config['pose_temp'] is not None:
+                pose_seq = np.load(audio_config['pose_temp'])
+                mirrored_pose_seq = np.concatenate((pose_seq, pose_seq[-2:0:-1]), axis=0)
+                pose_seq = np.tile(mirrored_pose_seq, (sample['seq_len'] // len(mirrored_pose_seq) + 1, 1))[:sample['seq_len']]
+            else:
+                id_seed = random.randint(0, 99)
+                id_seed = torch.LongTensor([id_seed]).cuda()
 
+                # Currently, only inference up to a maximum length of 10 seconds is supported.
+                chunk_duration = 5 # 5 seconds
+                sr = 16000
+                fps = 30
+                chunk_size = sr * chunk_duration 
+
+                audio_chunks = list(sample['audio_feature'].split(chunk_size, dim=1))
+                seq_len_list = [chunk_duration*fps] * (len(audio_chunks) - 1) + [sample['seq_len'] % (chunk_duration*fps)] # 30 fps 
+
+                audio_chunks[-2] = torch.cat((audio_chunks[-2], audio_chunks[-1]), dim=1)
+                seq_len_list[-2] = seq_len_list[-2] + seq_len_list[-1]
+                del audio_chunks[-1]
+                del seq_len_list[-1]
+
+                pose_seq = []
+                for audio, seq_len in zip(audio_chunks, seq_len_list):
+                    pose_seq_chunk = a2p_model.infer(audio, seq_len, id_seed)
+                    pose_seq_chunk = pose_seq_chunk.squeeze().detach().cpu().numpy()
+                    pose_seq_chunk[:, :3] *= 0.5
+                    pose_seq.append(pose_seq_chunk)
+
+                pose_seq = np.concatenate(pose_seq, 0)
+                pose_seq = smooth_pose_seq(pose_seq, 7)
+            
             # project 3D mesh to 2D landmark
-            projected_vertices = project_points(pred, face_result['trans_mat'], cycled_pose_seq, [height, width])
+            #projected_vertices = project_points(pred, face_result['trans_mat'], cycled_pose_seq, [height, width])
+            projected_vertices = project_points(pred, face_result['trans_mat'], pose_seq, [height, width])
             
             pose_images = []
             for i, verts in enumerate(projected_vertices):
@@ -550,10 +587,10 @@ class Audio2Video:
                 pose_images.append(lmk_img)
 
             pose_list = []
+            '''
             pose_tensor_list = []
             print(f"pose video has {len(pose_images)} frames")
             pose_transform = transforms.Compose([transforms.Resize((height, width)), transforms.ToTensor()])
-            
             frame_length = len(pose_images)
             for pose_image_np in pose_images[: frame_length]:
                 pose_image_pil = Image.fromarray(cv2.cvtColor(pose_image_np, cv2.COLOR_BGR2RGB))
@@ -562,15 +599,21 @@ class Audio2Video:
             for pose_image_np in pose_images[: frame_length: sub_step]:
                 pose_image_np = cv2.resize(pose_image_np,  (width, height))
                 pose_list.append(pose_image_np)
-                
+            '''
+            frame_length = len(pose_images) if length==0 or length > len(pose_images) else length
+            sub_step = fi_step if accelerate else 1
+            for pose_image_np in pose_images[: frame_length: sub_step]:
+                pose_image_np = cv2.resize(pose_image_np,  (width, height))
+                pose_list.append(pose_image_np)         
+            
             pose_list = np.array(pose_list)
             
             video_length = len(pose_list)
-
+            '''
             pose_tensor = torch.stack(pose_tensor_list, dim=0)  # (f, c, h, w)
             pose_tensor = pose_tensor.transpose(0, 1)
             pose_tensor = pose_tensor.unsqueeze(0)
-
+            '''
             video = pipe(
                 Image.fromarray(ref_image_pil),
                 pose_list,
@@ -689,13 +732,16 @@ class Audio2Video:
             pose_trans_list = []
             verts_list = []
             bs_list = []
+            '''
             src_tensor_list = []
             frame_length = len(images)
             for src_image_pil in images[: frame_length: step]:
                 src_image_pil = (src_image_pil.numpy() * 255).astype(np.uint8)
                 src_tensor_list.append(pose_transform(Image.fromarray(src_image_pil)))
-            sub_step = step*fi_step if accelerate else step
-            for src_image_pil in images[: frame_length: sub_step]:
+            '''
+            frame_length = len(images) if length==0 or length*step > len(images) else length*step
+            sub_step = fi_step if accelerate else step
+            for src_image_pil in images[: frame_length: step*sub_step]:
                 src_image_pil = (src_image_pil.numpy() * 255).astype(np.uint8)
                 src_img_np = cv2.cvtColor(np.array(src_image_pil), cv2.COLOR_RGB2BGR)
                 frame_height, frame_width, _ = src_img_np.shape
@@ -705,16 +751,32 @@ class Audio2Video:
                 pose_trans_list.append(src_img_result['trans_mat'])
                 verts_list.append(src_img_result['lmks3d'])
                 bs_list.append(src_img_result['bs'])
-                
-            pose_arr = np.array(pose_trans_list)
+            	
+            #pose_arr = np.array(pose_trans_list)
+            trans_mat_arr = np.array(pose_trans_list)
             verts_arr = np.array(verts_list)
             bs_arr = np.array(bs_list)
             min_bs_idx = np.argmin(bs_arr.sum(1))
 
+            # compute delta pose
+            pose_arr = np.zeros([trans_mat_arr.shape[0], 6])
+            for i in range(pose_arr.shape[0]):
+                euler_angles, translation_vector = matrix_to_euler_and_translation(trans_mat_arr[i]) # real pose of source
+                pose_arr[i, :3] =  euler_angles
+                pose_arr[i, 3:6] =  translation_vector
+    
+            init_tran_vec = face_result['trans_mat'][:3, 3] # init translation of tgt
+            pose_arr[:, 3:6] = pose_arr[:, 3:6] - pose_arr[0, 3:6] + init_tran_vec # (relative translation of source) + (init translation of tgt)
+
+            pose_arr_smooth = smooth_pose_seq(pose_arr, window_size=3)
+            pose_mat_smooth = [euler_and_translation_to_matrix(pose_arr_smooth[i][:3], pose_arr_smooth[i][3:6]) for i in range(pose_arr_smooth.shape[0])]    
+            pose_mat_smooth = np.array(pose_mat_smooth)   
+            
             # face retarget
             verts_arr = verts_arr - verts_arr[min_bs_idx] + face_result['lmks3d']
             # project 3D mesh to 2D landmark
-            projected_vertices = project_points_with_trans(verts_arr, pose_arr, [frame_height, frame_width])
+            #projected_vertices = project_points_with_trans(verts_arr, pose_arr, [frame_height, frame_width])
+            projected_vertices = project_points_with_trans(verts_arr, pose_mat_smooth, [frame_height, frame_width])
             
             pose_list = []
             for i, verts in enumerate(projected_vertices):
@@ -726,11 +788,11 @@ class Audio2Video:
             
             video_length = len(pose_list)                
                 
-
+            '''
             src_tensor = torch.stack(src_tensor_list, dim=0)  # (f, c, h, w)
             src_tensor = src_tensor.transpose(0, 1)
             src_tensor = src_tensor.unsqueeze(0)
-            
+            '''
             video_gen = pipe(
                 Image.fromarray(ref_image_pil),
                 pose_list,

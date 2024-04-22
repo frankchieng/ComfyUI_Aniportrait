@@ -13,7 +13,6 @@ weight_dtype: 'fp16'
 
 #pose_temp: "./configs/inference/head_pose_temp/pose_temp.npy"
 
-
 test_cases:
 #  "./configs/inference/ref_images/lyl.png":
 #    - "./configs/inference/audio/lyl.wav"
