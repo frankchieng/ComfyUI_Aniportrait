@@ -5,12 +5,14 @@
 - ✅ [2024/04/09] raw video to pose video with reference image(aka self-driven)
 - ✅ [2024/04/09] audio driven
 - ✅ [2024/04/09] face reenacment
+- ✅ [2024/04/22] implement audio2pose model and [pre-trained weight](https://huggingface.co/ZJYang/AniPortrait/tree/main) for audio2video,the face reenacment and audio2video workflow has been modified, currently  inference up to a maximum length of 10 seconds has been supported,you can experiment with the length hyperparameter.
 ### audio driven combined with reference image and reference video
-![audio2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/c498a62e-ffa0-4cbc-a39d-b7daec586001)
+![audio2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/86726d07-998c-493f-93e4-1ce9b58e1e90)
+[audio2video workflow](https://github.com/frankchieng/ComfyUI_Aniportrait/blob/main/assets/audio2video_workflow.json)
 <table class="center">
 <tr>
     <td width=100% style="border: none">
-        <video controls autoplay loop src="https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/d619f8b6-32ca-4aa2-8b18-d0649e3243ff" muted="false"></video>
+        <video controls autoplay loop src="https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/1ab454ef-13ca-4262-9206-383470a8408d" muted="false"></video>
     </td>
 </tr>
 </table>
@@ -26,11 +28,12 @@
 </table>
 
 ### face reenacment
-![face_reenacment](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/2bb488ee-ec20-44d1-a941-542b4e0be8bc)
+![face_reenacment](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/82f2ae7c-b7c2-49a7-8f13-4456ebff55e6)
+[video2video workflow](https://github.com/frankchieng/ComfyUI_Aniportrait/blob/main/assets/face_reenacment_workflow.json)
 <table class="center">
 <tr>
     <td width=100% style="border: none">
-        <video controls autoplay loop src="https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/931d7661-8c79-4747-be5b-b1d361b7e7e9" muted="false"></video>
+        <video controls autoplay loop src="https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/0a9e46fb-33b8-4787-b8ca-b70301240752" muted="false"></video>
     </td>
 </tr>
 </table>
@@ -65,6 +68,7 @@ download the weights:
 > [pose_guider.pth](https://huggingface.co/ZJYang/AniPortrait/tree/main)
 > [motion_module.pth](https://huggingface.co/ZJYang/AniPortrait/tree/main)
 > [audio2mesh.pt](https://huggingface.co/ZJYang/AniPortrait/tree/main)
+> [audio2pose.pt](https://huggingface.co/ZJYang/AniPortrait/tree/main)
 > [film_net_fp16.pt](https://huggingface.co/ZJYang/AniPortrait/tree/main)
 ```text
 ./pretrained_model/
@@ -93,6 +97,7 @@ download the weights:
 |   |-- tokenizer_config.json
 |   `-- vocab.json
 |-- audio2mesh.pt
+|-- audio2pose.pt
 |-- denoising_unet.pth
 |-- motion_module.pth
 |-- pose_guider.pth
