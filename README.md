@@ -6,6 +6,10 @@
 - ✅ [2024/04/09] audio driven
 - ✅ [2024/04/09] face reenacment
 - ✅ [2024/04/22] implement audio2pose model and [pre-trained weight](https://huggingface.co/ZJYang/AniPortrait/tree/main) for audio2video,the face reenacment and audio2video workflow has been modified, currently  inference up to a maximum length of 10 seconds has been supported,you can experiment with the length hyperparameter.
+
+U can contact me thr ![twitter_1](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/27b4fcae-e50c-477d-86f4-dacf7fd052f4)[twitter](https://twitter.com/kurtqian) ![wechat_1](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/b95cd0a2-4188-4eb3-b1de-5f6eeab71045) Weixin：GalaticKing
+
+
 ### audio driven combined with reference image and reference video
 ![audio2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/86726d07-998c-493f-93e4-1ce9b58e1e90)
 [audio2video workflow](https://github.com/frankchieng/ComfyUI_Aniportrait/blob/main/assets/audio2video_workflow.json)
