@@ -1,0 +1,15 @@
+[project]
+name = "comfyui_aniportrait"
+description = "implementation of [a/AniPortrait](https://github.com/Zejun-Yang/AniPortrait) generating of videos, includes self driven, face reenacment and audio driven with a reference image"
+version = "1.0.0"
+license = "LICENSE"
+dependencies = ["mediapipe==0.10.11", "ffmpeg-python==0.2.0", "av==11.0.0", "librosa==0.9.2", "diffusers==0.26.2"]
+
+[project.urls]
+Repository = "https://github.com/frankchieng/ComfyUI_Aniportrait"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "ComfyUI_Aniportrait"
+Icon = ""
