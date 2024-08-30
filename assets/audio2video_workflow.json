@@ -1,91 +1,7 @@
 {
-  "last_node_id": 10,
-  "last_link_id": 15,
+  "last_node_id": 17,
+  "last_link_id": 31,
   "nodes": [
-    {
-      "id": 8,
-      "type": "AniPortrait_Audio_Path",
-      "pos": [
-        -2085,
-        -66
-      ],
-      "size": {
-        "0": 315,
-        "1": 102
-      },
-      "flags": {},
-      "order": 0,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "audio_path",
-          "type": "Audio_Path",
-          "links": [
-            15
-          ],
-          "shape": 3,
-          "label": "audio_path",
-          "slot_index": 0
-        },
-        {
-          "name": "audio",
-          "type": "VHS_AUDIO",
-          "links": [
-            10
-          ],
-          "shape": 3,
-          "label": "audio"
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "AniPortrait_Audio_Path"
-      },
-      "widgets_values": [
-        "/home/qm/test.wav",
-        0
-      ]
-    },
-    {
-      "id": 7,
-      "type": "LoadImage",
-      "pos": [
-        -2082,
-        122
-      ],
-      "size": {
-        "0": 315,
-        "1": 314
-      },
-      "flags": {},
-      "order": 1,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "links": [
-            12
-          ],
-          "shape": 3,
-          "label": "IMAGE",
-          "slot_index": 0
-        },
-        {
-          "name": "MASK",
-          "type": "MASK",
-          "links": null,
-          "shape": 3,
-          "label": "MASK"
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "LoadImage"
-      },
-      "widgets_values": [
-        "258800-15040420314853 (3).jpg",
-        "image"
-      ]
-    },
     {
       "id": 10,
       "type": "AniPortrait_Audio2Video",
@@ -134,7 +50,7 @@
           "name": "images",
           "type": "IMAGE",
           "links": [
-            13
+            31
           ],
           "shape": 3,
           "label": "images"
@@ -146,7 +62,7 @@
       "widgets_values": [
         512,
         512,
-        1399,
+        1748,
         "randomize",
         3.5,
         25,
@@ -172,11 +88,11 @@
         -60
       ],
       "size": [
-        235.1999969482422,
-        491.1999969482422
+        251.52520751953125,
+        507.52520751953125
       ],
       "flags": {},
-      "order": 2,
+      "order": 0,
       "mode": 0,
       "inputs": [
         {
@@ -184,6 +100,12 @@
           "type": "VHS_BatchManager",
           "link": null,
           "label": "meta_batch"
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": null,
+          "label": "vae"
         }
       ],
       "outputs": [
@@ -193,9 +115,9 @@
           "links": [
             14
           ],
+          "slot_index": 0,
           "shape": 3,
-          "label": "IMAGE",
-          "slot_index": 0
+          "label": "IMAGE"
         },
         {
           "name": "frame_count",
@@ -215,9 +137,9 @@
           "name": "video_info",
           "type": "VHS_VIDEOINFO",
           "links": [],
+          "slot_index": 3,
           "shape": 3,
-          "label": "video_info",
-          "slot_index": 3
+          "label": "video_info"
         }
       ],
       "properties": {
@@ -249,39 +171,128 @@
       }
     },
     {
-      "id": 9,
+      "id": 7,
+      "type": "LoadImage",
+      "pos": [
+        -2082,
+        122
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            12
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "IMAGE"
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "MASK"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "man.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "AniPortrait_Audio_Path",
+      "pos": [
+        -2114,
+        -238
+      ],
+      "size": {
+        "0": 315,
+        "1": 102
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "audio_path",
+          "type": "Audio_Path",
+          "links": [
+            15
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "audio_path"
+        },
+        {
+          "name": "audio",
+          "type": "VHS_AUDIO",
+          "links": [
+            30
+          ],
+          "shape": 3,
+          "label": "audio",
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AniPortrait_Audio_Path"
+      },
+      "widgets_values": [
+        "/home/qm/test.wav",
+        0
+      ]
+    },
+    {
+      "id": 17,
       "type": "VHS_VideoCombine",
       "pos": [
-        -1359,
-        -62
+        -1297,
+        -16
       ],
       "size": [
-        315,
-        599
+        218.82891845703125,
+        523.3297469669985
       ],
       "flags": {},
-      "order": 4,
+      "order": 5,
       "mode": 0,
       "inputs": [
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 13,
-          "label": "images",
-          "slot_index": 0
+          "link": 31,
+          "label": "images"
         },
         {
           "name": "audio",
-          "type": "VHS_AUDIO",
-          "link": 10,
-          "label": "audio",
-          "slot_index": 1
+          "type": "AUDIO",
+          "link": 29,
+          "label": "audio"
         },
         {
           "name": "meta_batch",
           "type": "VHS_BatchManager",
           "link": null,
           "label": "meta_batch"
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": null,
+          "label": "vae"
         }
       ],
       "outputs": [
@@ -313,34 +324,59 @@
             "filename": "Aniportrait_00002-audio.mp4",
             "subfolder": "",
             "type": "output",
-            "format": "video/h264-mp4"
-          }
+            "format": "video/h264-mp4",
+            "frame_rate": 30
+          },
+          "muted": false
         }
       }
+    },
+    {
+      "id": 13,
+      "type": "VHS_VHSAudioToAudio",
+      "pos": [
+        -1682,
+        -200
+      ],
+      "size": {
+        "0": 304.67462158203125,
+        "1": 26
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "vhs_audio",
+          "type": "VHS_AUDIO",
+          "link": 30,
+          "label": "vhs_audio"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            29
+          ],
+          "shape": 3,
+          "label": "audio",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VHS_VHSAudioToAudio"
+      },
+      "widgets_values": {}
     }
   ],
   "links": [
-    [
-      10,
-      8,
-      1,
-      9,
-      1,
-      "VHS_AUDIO"
-    ],
     [
       12,
       7,
       0,
       10,
-      0,
-      "IMAGE"
-    ],
-    [
-      13,
-      10,
-      0,
-      9,
       0,
       "IMAGE"
     ],
@@ -359,10 +395,42 @@
       10,
       2,
       "Audio_Path"
+    ],
+    [
+      29,
+      13,
+      0,
+      17,
+      1,
+      "AUDIO"
+    ],
+    [
+      30,
+      8,
+      1,
+      13,
+      0,
+      "VHS_AUDIO"
+    ],
+    [
+      31,
+      10,
+      0,
+      17,
+      0,
+      "IMAGE"
     ]
   ],
   "groups": [],
   "config": {},
-  "extra": {},
+  "extra": {
+    "ds": {
+      "scale": 1.061076460950001,
+      "offset": [
+        2608.218390205725,
+        532.0839393915426
+      ]
+    }
+  },
   "version": 0.4
 }
