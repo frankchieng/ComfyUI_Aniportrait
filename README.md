@@ -11,7 +11,7 @@ U can contact me thr ![twitter_1](https://github.com/frankchieng/ComfyUI_Aniport
 
 
 ### audio driven combined with reference image and reference video
-![audio2video](https://github.com/frankchieng/ComfyUI_Aniportrait/assets/130369523/86726d07-998c-493f-93e4-1ce9b58e1e90)
+![截图 2024-08-30 12-04-53](https://github.com/user-attachments/assets/10b73c50-a046-41d5-abd1-5ea40a23ad3a)
 [audio2video workflow](https://github.com/frankchieng/ComfyUI_Aniportrait/blob/main/assets/audio2video_workflow.json)
 <table class="center">
 <tr>
